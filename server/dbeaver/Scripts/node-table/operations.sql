@@ -1,120 +1,105 @@
 -- ----------------------------------------------------------------
--- `cd FOLDER_PATH` (just showing in the UI).
+-- cd PATH
 -- ----------------------------------------------------------------
-
--- ----------------------------------------------------------------
--- `cr PATH`
--- ----------------------------------------------------------------
-CREATE OR REPLACE FUNCTION create_folder(varchar, varchar, varchar)
-RETURNS TABLE(
-	"path"      varchar,
-	"type"      node_type,
-	"name"      varchar,
-	created_at  timestamptz
-)
-LANGUAGE sql
-AS $$
-    INSERT INTO node ("path", "type", "name", parent_path)
-    VALUES ($1, 'folder', $2, $3)
-    RETURNING "path", "type", "name", created_at;
-$$;
-
--- 200.
-SELECT * FROM create_folder('/usr/holistic', 'holistic', '/usr');
+SELECT is_folder
+FROM node
+WHERE "path" = ARRAY['/', 'usr'];
 
 -- ----------------------------------------------------------------
--- `cr PATH DATA`
+-- cr PATH [DATA]
 -- ----------------------------------------------------------------
-CREATE OR REPLACE FUNCTION create_file(varchar, varchar, text, varchar)
-RETURNS TABLE (
-	"path"      varchar,
-	"type"      node_type,
-	"name"      varchar,
-	created_at  timestamptz
-)
-LANGUAGE sql
-AS $$
-    INSERT INTO node ("path", "type", "name", "data", parent_path)
-    VALUES ($1, 'file', $2, $3, $4)
-    RETURNING "path", "type", "name", created_at;
-$$
+-- create new folder.
+INSERT INTO node ("path", is_folder, "data")
+VALUES (ARRAY['/', 'usr', 'holistic', 'new-folder'], NULL IS NULL, NULL)
+RETURNING "path", is_folder, "data", created_at;
 
--- 200.
-SELECT * FROM create_file('/usr/holistic/cuong', 'cuong', 'This is the `cuong` file', '/usr/holistic');
+-- create new file.
+INSERT INTO node ("path", is_folder, "data")
+VALUES (ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'], 'New data file' IS NULL, 'New data file')
+RETURNING "path", is_folder, "data", created_at;
 
 -- ----------------------------------------------------------------
--- `cat FILE_PATH`
+-- cat FILE_PATH
 -- ----------------------------------------------------------------
-CREATE OR REPLACE FUNCTION read_file(varchar)
-RETURNS text
-LANGUAGE sql
-AS $$
-    SELECT "data" 
-    FROM node
-    WHERE "type" = 'file' AND "path" = $1;
-$$
-
--- 200.
-SELECT * FROM read_file('/bin/echo');
--- 404.
-SELECT * FROM read_file('/non-exist-file');
+SELECT "path", is_folder, "data", created_at
+FROM node
+WHERE
+	"path" = ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file']
+	AND is_folder = false;
 
 -- ----------------------------------------------------------------
--- `ls [FOLDER_PATH]`
+-- ls FOLDER_PATH
 -- ----------------------------------------------------------------
-CREATE OR REPLACE FUNCTION list_nodes(varchar)
-RETURNS TABLE (
-	PATH varchar,
-	TYPE node_type,
-	"name" varchar,
-	created_at timestamptz,
-	SIZE integer
-)
-LANGUAGE sql
-AS $$
-    -- List all files.
-    SELECT "path", "type", "name", created_at, char_length("data") AS size
-    FROM node
-    WHERE "type" = 'file' AND parent_path = $1
-    UNION
-        -- List all folders.
-        SELECT p."path", p."type", p."name", p.created_at, c.count AS size
-        FROM
-            node p
-            JOIN LATERAL (
-               SELECT p."path", count(*) FROM node c WHERE p."path" = c.parent_path AND c."type" = 'file'
-            ) c
-			ON p."path" = c."path"
-        WHERE p."type" = 'folder' AND p.parent_path = $1;
-$$
-
-SELECT * FROM list_nodes('/usr');
+-- Get all files.
+SELECT "path", is_folder, created_at, char_length("data") AS "size"
+FROM node
+WHERE
+	NOT is_folder
+	AND "path" @> ARRAY['/', 'share']
+	AND array_length("path", 1) = array_length(ARRAY['/', 'share'], 1) + 1
+UNION
+	SELECT p."path", p.is_folder, p.created_at, c_calc."size"
+	FROM
+	    node p
+	    JOIN LATERAL (
+	        SELECT p."path", coalesce(sum(char_length(c."data")), 0) AS "size"
+	        FROM node c
+	        WHERE
+	            NOT c.is_folder
+	            AND c."path" @> p."path"
+	            AND array_length(c."path", 1) = array_length(p."path", 1) + 1
+	    ) c_calc ON p."path" = c_calc."path"
+	WHERE
+		is_folder
+		AND p."path" @> ARRAY['/', 'share']
+		AND array_length(p."path", 1) = array_length(ARRAY['/', 'share'], 1) + 1;
 
 -- ----------------------------------------------------------------
--- `up PATH NAME`
+-- find NAME
 -- ----------------------------------------------------------------
-CREATE OR REPLACE FUNCTION update_node_name_data(varchar, varchar, varchar, text)
-RETURNS varchar
-LANGUAGE sql
-AS $$
-    UPDATE node
-    SET
-        "path" = $2,
-        "name" = $3,
-        "data" = coalesce($4, "data")
+SELECT "path", is_folder, "data", created_at
+FROM node
+WHERE
+	"path" @> ARRAY['/', 'usr', 'holistic']
+	AND array_length("path", 1) > array_length(ARRAY['/', 'usr', 'holistic'], 1)
+	AND "path"[array_length("path", 1)] LIKE '%o%';
 
-    WHERE "path" = $1
-    RETURNING "path";
-$$
+-- ----------------------------------------------------------------
+-- up PATH NAME [DATA]
+-- ----------------------------------------------------------------
+-- update folder name.
+UPDATE node
+SET
+    "path" = (ARRAY['/', 'usr', 'holistic-2'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic'], 1) + 1):])
+WHERE "path" @> ARRAY['/', 'usr', 'holistic']
+RETURNING "path", is_folder, "data", created_at;
 
--- (200) Update folder name.
-SELECT * FROM update_node_name_data('/usr/holistic', '/usr/holistic-2', 'holistic-2');
--- (200) Update file name.
-SELECT * FROM update_node_name_data('/usr/holistic/cuong', '/usr/holistic-2', 'holistic-2');
+-- update file data.
+UPDATE node
+SET
+    "path" = (ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'], 1) + 1):]),
+    "data" = 'Updated data'
+WHERE "path" = ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file']
+RETURNING "path", is_folder, "data", created_at;
 
+-- ----------------------------------------------------------------
+-- mv PATH FOLDER_PATH
+-- ----------------------------------------------------------------
+UPDATE node
+SET
+    "path" = (ARRAY['/', 'share', 'lib', 'holistic-2'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic-2'], 1) + 1):])
+WHERE "path" @> ARRAY['/', 'usr', 'holistic-2']
+RETURNING "path", is_folder, "data", created_at;
 
+-- ----------------------------------------------------------------
+-- rm PATH
+-- ----------------------------------------------------------------
+-- delete file.
+DELETE FROM node
+WHERE "path" @> ARRAY['/', 'share', 'lib', 'holistic-2', 'nothing']
+RETURNING "path", is_folder, "data", created_at;
 
-
-DROP FUNCTION create_folder;
-DROP FUNCTION create_file;
-DROP FUNCTION list_nodes;
+-- delete folder.
+DELETE FROM node
+WHERE "path" @> ARRAY['/', 'share', 'lib', 'holistic-2', 'new-folder']
+RETURNING "path", is_folder, "data", created_at;
