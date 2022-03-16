@@ -20,6 +20,7 @@ impl IntoResponse for AppError {
             AppError::Vfs(e) => match e {
                 VfsError::PathNotExist => (StatusCode::NOT_FOUND, e.to_string()),
                 VfsError::PathNotAFile => (StatusCode::BAD_REQUEST, e.to_string()),
+                VfsError::PathNotAFolder => (StatusCode::BAD_REQUEST, e.to_string()),
             },
         };
 
@@ -40,4 +41,6 @@ pub enum VfsError {
     PathNotExist,
     #[error("path is not a file")]
     PathNotAFile,
+    #[error("path is not a folder")]
+    PathNotAFolder,
 }

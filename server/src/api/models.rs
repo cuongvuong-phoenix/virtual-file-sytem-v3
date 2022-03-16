@@ -1,6 +1,9 @@
 use super::{AppError, VfsError};
+use axum::Json;
 use chrono::{DateTime, Utc};
+use futures::future;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use sqlx::{Pool, Postgres};
 
 // ----------------------------------------------------------------
@@ -43,7 +46,7 @@ impl NodePath {
         .fetch_optional(db_pool)
         .await
         .map_err(|_| AppError::Database)?
-        .map(|rec| rec.is_folder)
+        .map(|rec| rec.is_folder as bool)
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
     }
 
@@ -60,12 +63,12 @@ impl NodePath {
         .await
         .map_err(|_| AppError::Database)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
-        .map(|rec| rec.data)?
+        .map(|rec| rec.data as Option<String>)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
     }
 
     pub async fn ls(&self, db_pool: &Pool<Postgres>) -> Result<Vec<NodeLsItem>, AppError> {
-        sqlx::query_as!(
+        let paths = sqlx::query_as!(
             NodeLsItem,
             r#"
             SELECT
@@ -101,7 +104,13 @@ impl NodePath {
         )
         .fetch_all(db_pool)
         .await
-        .map_err(|_| AppError::Database)
+        .map_err(|_| AppError::Database)?;
+
+        if paths.len() > 0 {
+            Ok(paths)
+        } else {
+            Err(AppError::Vfs(VfsError::PathNotAFolder))
+        }
     }
 }
 
@@ -161,7 +170,7 @@ impl NodePathNameData {
             .await
             .map_err(|_| AppError::Database)?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
-            .map(|rec| rec.path),
+            .map(|rec| rec.path as Vec<String>),
 
             None => sqlx::query!(
                 r#"
@@ -180,7 +189,7 @@ impl NodePathNameData {
             .await
             .map_err(|_| AppError::Database)?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
-            .map(|rec| rec.path),
+            .map(|rec| rec.path as Vec<String>),
         }
     }
 }
@@ -209,6 +218,51 @@ impl NodePathFolderPath {
         .await
         .map_err(|_| AppError::Database)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
-        .map(|rec| rec.path)
+        .map(|rec| rec.path as Vec<String>)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct NodePaths {
+    paths: Vec<Vec<String>>,
+}
+
+impl NodePaths {
+    pub async fn rm(&self, db_pool: &Pool<Postgres>) -> Json<Value> {
+        let a: Vec<Result<(&Vec<String>, bool), AppError>> =
+            future::join_all(self.paths.iter().map(|path| async move {
+                sqlx::query!(
+                    r#"
+                    DELETE FROM node
+                    WHERE "path" @> $1
+                    RETURNING "path"
+                    "#,
+                    path
+                )
+                .fetch_optional(db_pool)
+                .await
+                .map_err(|_| AppError::Database)
+                .map(|rec_opt| match rec_opt {
+                    Some(_) => (path, true),
+                    None => (path, false),
+                })
+            }))
+            .await;
+
+        let paths: Vec<_> = a.into_iter().filter_map(|result| result.ok()).collect();
+
+        let (removed_paths, non_existed_paths): (Vec<_>, Vec<_>) =
+            paths.into_iter().partition(|tuple| tuple.1);
+
+        let removed_paths: Vec<_> = removed_paths.into_iter().map(|tuple| tuple.0).collect();
+        let non_existed_paths: Vec<_> =
+            non_existed_paths.into_iter().map(|tuple| tuple.0).collect();
+
+        Json(json!({
+            "data": {
+                "removedPaths": removed_paths,
+                "nonExistedPaths": non_existed_paths
+            }
+        }))
     }
 }

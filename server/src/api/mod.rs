@@ -18,4 +18,5 @@ pub fn init_routes() -> Router {
         .route("/find", post(find))
         .route("/up", post(up))
         .route("/mv", post(mv))
+        .route("/rm", post(rm))
 }

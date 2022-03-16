@@ -1,9 +1,9 @@
 use super::{
     models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathFolderPath, NodePathName,
-    NodePathNameData,
+    NodePathNameData, NodePaths,
 };
 use crate::State;
-use axum::{extract::Extension, http::StatusCode, Json};
+use axum::{extract::Extension, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
 
 pub async fn cd(
@@ -58,4 +58,13 @@ pub async fn mv(
     let path = node.mv(&state.db_pool).await?;
 
     Ok(AppResponse::new(path, StatusCode::OK))
+}
+
+pub async fn rm(
+    Extension(state): Extension<Arc<State>>,
+    Json(node): Json<NodePaths>,
+) -> impl IntoResponse {
+    let body = node.rm(&state.db_pool).await;
+
+    (StatusCode::OK, body).into_response()
 }
