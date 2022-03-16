@@ -7,8 +7,6 @@ use serde_json::json;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Internal Server Error")]
-    Internal,
     #[error("Database Error")]
     Database,
     #[error(transparent)]
@@ -18,7 +16,6 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, err_msg) = match self {
-            AppError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::Database => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::Vfs(e) => match e {
                 VfsError::PathNotExist => (StatusCode::NOT_FOUND, e.to_string()),
