@@ -184,3 +184,31 @@ impl NodePathNameData {
         }
     }
 }
+
+#[derive(Deserialize)]
+pub struct NodePathFolderPath {
+    path: Vec<String>,
+    folder_path: Vec<String>,
+}
+
+impl NodePathFolderPath {
+    pub async fn mv(&self, db_pool: &Pool<Postgres>) -> Result<Vec<String>, AppError> {
+        sqlx::query!(
+            r#"
+            UPDATE node
+            SET
+                "path" = $2
+                    || "path"[(array_length($1, 1)):]
+            WHERE "path" @> $1
+            RETURNING "path", is_folder, "data", created_at;
+            "#,
+            &self.path,
+            &self.folder_path
+        )
+        .fetch_optional(db_pool)
+        .await
+        .map_err(|_| AppError::Database)?
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
+        .map(|rec| rec.path)
+    }
+}

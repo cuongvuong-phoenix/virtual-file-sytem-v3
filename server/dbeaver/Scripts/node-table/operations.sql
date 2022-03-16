@@ -70,14 +70,16 @@ WHERE
 -- update folder name.
 UPDATE node
 SET
-    "path" = (ARRAY['/', 'usr', 'holistic-2'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic'], 1) + 1):])
+    "path" = ARRAY['/', 'usr', 'holistic-2']
+		|| "path"[(array_length(ARRAY['/', 'usr', 'holistic'], 1) + 1):]
 WHERE "path" @> ARRAY['/', 'usr', 'holistic']
 RETURNING "path", is_folder, "data", created_at;
 
 -- update file data.
 UPDATE node
 SET
-    "path" = (ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'], 1) + 1):]),
+    "path" = ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file']
+		|| "path"[(array_length(ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file'], 1) + 1):],
     "data" = 'Updated data'
 WHERE "path" = ARRAY['/', 'usr', 'holistic', 'new-folder', 'new-file']
 RETURNING "path", is_folder, "data", created_at;
@@ -87,7 +89,8 @@ RETURNING "path", is_folder, "data", created_at;
 -- ----------------------------------------------------------------
 UPDATE node
 SET
-    "path" = (ARRAY['/', 'share', 'lib', 'holistic-2'] || "path"[(array_length(ARRAY['/', 'usr', 'holistic-2'], 1) + 1):])
+    "path" = ARRAY['/', 'share', 'lib']
+		|| "path"[(array_length(ARRAY['/', 'usr', 'holistic-2'], 1)):]
 WHERE "path" @> ARRAY['/', 'usr', 'holistic-2']
 RETURNING "path", is_folder, "data", created_at;
 

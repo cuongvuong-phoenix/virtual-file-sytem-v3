@@ -36,7 +36,7 @@ impl IntoResponse for AppError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum VfsError {
-    #[error("path does not exists")]
+    #[error("path does not exist")]
     PathNotExist,
     #[error("path is not a file")]
     PathNotAFile,

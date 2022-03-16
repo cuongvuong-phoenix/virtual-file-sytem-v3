@@ -1,5 +1,6 @@
 use super::{
-    models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathName, NodePathNameData,
+    models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathFolderPath, NodePathName,
+    NodePathNameData,
 };
 use crate::State;
 use axum::{extract::Extension, http::StatusCode, Json};
@@ -46,6 +47,15 @@ pub async fn up(
     Json(node): Json<NodePathNameData>,
 ) -> Result<AppResponse<Vec<String>>, AppError> {
     let path = node.up(&state.db_pool).await?;
+
+    Ok(AppResponse::new(path, StatusCode::OK))
+}
+
+pub async fn mv(
+    Extension(state): Extension<Arc<State>>,
+    Json(node): Json<NodePathFolderPath>,
+) -> Result<AppResponse<Vec<String>>, AppError> {
+    let path = node.mv(&state.db_pool).await?;
 
     Ok(AppResponse::new(path, StatusCode::OK))
 }
