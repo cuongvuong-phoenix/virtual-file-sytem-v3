@@ -11,5 +11,8 @@ pub use models::*;
 pub use response::*;
 
 pub fn init_routes() -> Router {
-    Router::new().route("/cd", post(cd))
+    Router::new()
+        .route("/cd", post(cd))
+        .route("/cat", post(cat))
+        .route("/ls", post(ls))
 }
