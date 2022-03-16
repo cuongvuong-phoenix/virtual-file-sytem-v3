@@ -16,4 +16,5 @@ pub fn init_routes() -> Router {
         .route("/cat", post(cat))
         .route("/ls", post(ls))
         .route("/find", post(find))
+        .route("/up", post(up))
 }

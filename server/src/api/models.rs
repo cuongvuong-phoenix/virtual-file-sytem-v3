@@ -59,8 +59,8 @@ impl NodePath {
         .fetch_optional(db_pool)
         .await
         .map_err(|_| AppError::Database)?
-        .map(|rec| rec.data)
-        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
+        .map(|rec| rec.data)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
     }
 
@@ -78,22 +78,24 @@ impl NodePath {
                 NOT is_folder
                 AND "path" @> $1
                 AND array_length("path", 1) = array_length($1, 1) + 1
+
             UNION
-                SELECT p."path", p.is_folder, p.created_at, c_calc."size"
-                FROM
-                    node p
-                    JOIN LATERAL (
-                        SELECT p."path", coalesce(sum(char_length(c."data")), 0) AS "size"
-                        FROM node c
-                        WHERE
-                            NOT c.is_folder
-                            AND c."path" @> p."path"
-                            AND array_length(c."path", 1) = array_length(p."path", 1) + 1
-                    ) c_calc ON p."path" = c_calc."path"
-                WHERE
-                    is_folder
-                    AND p."path" @> $1
-                    AND array_length(p."path", 1) = array_length($1, 1) + 1;
+
+            SELECT p."path", p.is_folder, p.created_at, c_calc."size"
+            FROM
+                node p
+                JOIN LATERAL (
+                    SELECT p."path", coalesce(sum(char_length(c."data")), 0) AS "size"
+                    FROM node c
+                    WHERE
+                        NOT c.is_folder
+                        AND c."path" @> p."path"
+                        AND array_length(c."path", 1) = array_length(p."path", 1) + 1
+                ) c_calc ON p."path" = c_calc."path"
+            WHERE
+                is_folder
+                AND p."path" @> $1
+                AND array_length(p."path", 1) = array_length($1, 1) + 1;
             "#,
             &self.path
         )
@@ -127,5 +129,58 @@ impl NodePathName {
         .fetch_all(db_pool)
         .await
         .map_err(|_| AppError::Database)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct NodePathNameData {
+    path: Vec<String>,
+    name: String,
+    data: Option<String>,
+}
+
+impl NodePathNameData {
+    pub async fn up(&self, db_pool: &Pool<Postgres>) -> Result<Vec<String>, AppError> {
+        match &self.data {
+            Some(data) => sqlx::query!(
+                r#"
+                UPDATE node
+                SET
+                    "path" = "path"[:(array_length("path", 1) - 1)] || ARRAY[$2],
+                    "data" = $3
+                WHERE
+                    NOT is_folder
+                    AND "path" = $1
+                RETURNING "path";
+                "#,
+                &self.path,
+                self.name,
+                data
+            )
+            .fetch_optional(db_pool)
+            .await
+            .map_err(|_| AppError::Database)?
+            .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
+            .map(|rec| rec.path),
+
+            None => sqlx::query!(
+                r#"
+                UPDATE node
+                SET
+                    "path" = "path"[:(array_length($1, 1) - 1)]
+                        || ARRAY[$2]
+                        || "path"[(array_length($1, 1) + 1):]
+                WHERE "path" @> $1
+                RETURNING "path";
+                "#,
+                &self.path,
+                self.name
+            )
+            .fetch_optional(db_pool)
+            .await
+            .map_err(|_| AppError::Database)?
+            .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
+            .map(|rec| rec.path),
+        }
     }
 }

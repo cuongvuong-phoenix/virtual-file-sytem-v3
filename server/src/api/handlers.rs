@@ -1,4 +1,6 @@
-use super::{models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathName};
+use super::{
+    models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathName, NodePathNameData,
+};
 use crate::State;
 use axum::{extract::Extension, http::StatusCode, Json};
 use std::sync::Arc;
@@ -37,4 +39,13 @@ pub async fn find(
     let nodes = node.find(&state.db_pool).await?;
 
     Ok(AppResponse::new(nodes, StatusCode::OK))
+}
+
+pub async fn up(
+    Extension(state): Extension<Arc<State>>,
+    Json(node): Json<NodePathNameData>,
+) -> Result<AppResponse<Vec<String>>, AppError> {
+    let path = node.up(&state.db_pool).await?;
+
+    Ok(AppResponse::new(path, StatusCode::OK))
 }
