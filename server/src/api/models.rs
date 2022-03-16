@@ -3,14 +3,27 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
+// ----------------------------------------------------------------
+// Serializable
+// ----------------------------------------------------------------
 #[derive(Serialize)]
-pub struct NodeListItem {
+pub struct NodeLsItem {
     path: Vec<String>,
     is_folder: bool,
     created_at: DateTime<Utc>,
     size: i64,
 }
 
+#[derive(Serialize)]
+pub struct Node {
+    path: Vec<String>,
+    is_folder: bool,
+    created_at: DateTime<Utc>,
+}
+
+// ----------------------------------------------------------------
+// Deserializable
+// ----------------------------------------------------------------
 #[derive(Deserialize)]
 pub struct NodePath {
     path: Vec<String>,
@@ -48,12 +61,12 @@ impl NodePath {
         .map_err(|_| AppError::Database)?
         .map(|rec| rec.data)
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?
-        .ok_or_else(|| AppError::Vfs(VfsError::PathIsAFolder))
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
     }
 
-    pub async fn ls(&self, db_pool: &Pool<Postgres>) -> Result<Vec<NodeListItem>, AppError> {
+    pub async fn ls(&self, db_pool: &Pool<Postgres>) -> Result<Vec<NodeLsItem>, AppError> {
         sqlx::query_as!(
-            NodeListItem,
+            NodeLsItem,
             r#"
             SELECT
                 "path" AS "path!",
@@ -83,6 +96,33 @@ impl NodePath {
                     AND array_length(p."path", 1) = array_length($1, 1) + 1;
             "#,
             &self.path
+        )
+        .fetch_all(db_pool)
+        .await
+        .map_err(|_| AppError::Database)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct NodePathName {
+    path: Vec<String>,
+    name: String,
+}
+
+impl NodePathName {
+    pub async fn find(&self, db_pool: &Pool<Postgres>) -> Result<Vec<Node>, AppError> {
+        sqlx::query_as!(
+            Node,
+            r#"
+            SELECT "path", is_folder, created_at
+            FROM node
+            WHERE
+                "path" @> $1
+                AND array_length("path", 1) > array_length($1, 1)
+                AND "path"[array_length("path", 1)] LIKE '%' || $2 || '%';
+            "#,
+            &self.path,
+            self.name
         )
         .fetch_all(db_pool)
         .await
