@@ -1,0 +1,17 @@
+[package]
+name = "virtual-file-system-v3-server"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.4.8"
+chrono = { version = "0.4.19", features = ["serde"] }
+dotenv = "0.15.0"
+serde = { version = "1.0.136", features = ["derive"] }
+sqlx = { version = "0.5.11", features = ["runtime-tokio-native-tls", "postgres", "chrono", "offline"] }
+tokio = { version = "1.17.0", features = ["rt-multi-thread", "macros"] }
+tower-http = { version = "0.2.5", features = ["trace", "cors"] }
+tracing = "0.1.32"
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
