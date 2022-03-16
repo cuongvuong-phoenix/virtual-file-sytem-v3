@@ -7,8 +7,6 @@ use serde_json::json;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Database Error")]
-    OldDatabase,
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error(transparent)]
@@ -18,7 +16,6 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, err_msg) = match self {
-            AppError::OldDatabase => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::Database(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             AppError::Vfs(e) => (StatusCode::BAD_REQUEST, e.to_string()),
         };

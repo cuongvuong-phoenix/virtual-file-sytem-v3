@@ -129,8 +129,7 @@ impl NodePath {
             &self.path
         )
         .fetch_optional(db_pool)
-        .await
-        .map_err(|_| AppError::OldDatabase)?
+        .await?
         .map(|rec| rec.is_folder as bool)
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?;
 
@@ -151,8 +150,7 @@ impl NodePath {
             &self.path
         )
         .fetch_optional(db_pool)
-        .await
-        .map_err(|_| AppError::OldDatabase)?
+        .await?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
         .map(|rec| rec.data as Option<String>)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
@@ -192,8 +190,7 @@ impl NodePath {
             &self.path
         )
         .fetch_all(db_pool)
-        .await
-        .map_err(|_| AppError::OldDatabase)?;
+        .await?;
 
         if paths.len() > 0 {
             Ok(paths)
@@ -226,7 +223,7 @@ impl NodePathName {
         )
         .fetch_all(db_pool)
         .await
-        .map_err(|_| AppError::OldDatabase)
+        .map_err(AppError::Database)
     }
 }
 
@@ -256,8 +253,7 @@ impl NodePathNameData {
                 data
             )
             .fetch_optional(db_pool)
-            .await
-            .map_err(|_| AppError::OldDatabase)?
+            .await?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
             .map(|rec| rec.path as Vec<String>),
 
@@ -275,8 +271,7 @@ impl NodePathNameData {
                 self.name
             )
             .fetch_optional(db_pool)
-            .await
-            .map_err(|_| AppError::OldDatabase)?
+            .await?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
             .map(|rec| rec.path as Vec<String>),
         }
@@ -304,8 +299,7 @@ impl NodePathFolderPath {
             &self.folder_path
         )
         .fetch_optional(db_pool)
-        .await
-        .map_err(|_| AppError::OldDatabase)?
+        .await?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
         .map(|rec| rec.path as Vec<String>)
     }
@@ -330,7 +324,7 @@ impl NodePaths {
                 )
                 .fetch_optional(db_pool)
                 .await
-                .map_err(|_| AppError::OldDatabase)
+                .map_err(AppError::Database)
                 .map(|rec_opt| match rec_opt {
                     Some(_) => (path, true),
                     None => (path, false),
