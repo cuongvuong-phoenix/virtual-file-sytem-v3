@@ -4,11 +4,18 @@ use chrono::{DateTime, Utc};
 use futures::future;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sqlx::{Pool, Postgres};
+use sqlx::{Acquire, Pool, Postgres};
 
 // ----------------------------------------------------------------
 // Serializable
 // ----------------------------------------------------------------
+#[derive(Serialize)]
+pub struct Node {
+    path: Vec<String>,
+    is_folder: bool,
+    created_at: DateTime<Utc>,
+}
+
 #[derive(Serialize)]
 pub struct NodeLsItem {
     path: Vec<String>,
@@ -17,16 +24,94 @@ pub struct NodeLsItem {
     size: i64,
 }
 
-#[derive(Serialize)]
-pub struct Node {
-    path: Vec<String>,
-    is_folder: bool,
-    created_at: DateTime<Utc>,
-}
-
 // ----------------------------------------------------------------
 // Deserializable
 // ----------------------------------------------------------------
+#[derive(Deserialize)]
+pub struct NodeCr {
+    path: Vec<String>,
+    data: Option<String>,
+    parents_opt: bool,
+}
+
+impl NodeCr {
+    pub async fn cr(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        let mut transaction = db_pool.begin().await?;
+
+        transaction.begin().await?;
+
+        let is_parent_folder = sqlx::query!(
+            r#"
+            SELECT is_folder
+            FROM node
+            WHERE "path" = ($1::text[])[:(array_length($1, 1) - 1)]
+            "#,
+            &self.path
+        )
+        .fetch_optional(&mut transaction)
+        .await?
+        .map(|rec| rec.is_folder as bool);
+
+        let result = match is_parent_folder {
+            Some(parent_is_folder) => {
+                if parent_is_folder {
+                    sqlx::query_as!(
+                        Node,
+                        r#"
+                        INSERT INTO node ("path", is_folder, "data")
+                        VALUES ($1, $2::text IS NULL, $2)
+                        ON CONFLICT ("path") DO NOTHING
+                        RETURNING "path", is_folder, created_at;
+                        "#,
+                        &self.path,
+                        self.data
+                    )
+                    .fetch_optional(&mut transaction)
+                    .await?
+                    .ok_or_else(|| AppError::Vfs(VfsError::PathExist))
+                } else {
+                    Err(AppError::Vfs(VfsError::ParentPathIsAFile))
+                }
+            }
+            None => {
+                if !self.parents_opt {
+                    Err(AppError::Vfs(VfsError::ParentPathNotExist))
+                } else {
+                    sqlx::query_as!(
+                        Node,
+                        r#"
+                        WITH RECURSIVE rec AS (
+                            SELECT
+                                $1::text[] AS "path",
+                                $2::text IS NULL AS is_folder,
+                                $2 AS "data"
+                            UNION
+                            SELECT "path"[:(array_length("path", 1) - 1)], TRUE AS is_folder, NULL
+                            FROM rec
+                            WHERE array_length("path", 1) > 1
+                        )
+                        INSERT INTO node("path", is_folder, "data")
+                        SELECT "path", is_folder, "data"
+                        FROM rec
+                        ON CONFLICT ("path") DO NOTHING
+                        RETURNING "path", is_folder, created_at;
+                        "#,
+                        &self.path,
+                        self.data
+                    )
+                    .fetch_one(&mut transaction)
+                    .await
+                    .map_err(AppError::Database)
+                }
+            }
+        };
+
+        transaction.commit().await?;
+
+        result
+    }
+}
+
 #[derive(Deserialize)]
 pub struct NodePath {
     path: Vec<String>,
@@ -34,7 +119,7 @@ pub struct NodePath {
 
 impl NodePath {
     pub async fn cd(&self, db_pool: &Pool<Postgres>) -> Result<bool, AppError> {
-        sqlx::query!(
+        let is_folder = sqlx::query!(
             r#"
             SELECT is_folder
             FROM node
@@ -45,9 +130,15 @@ impl NodePath {
         )
         .fetch_optional(db_pool)
         .await
-        .map_err(|_| AppError::Database)?
+        .map_err(|_| AppError::OldDatabase)?
         .map(|rec| rec.is_folder as bool)
-        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?;
+
+        if is_folder {
+            Ok(true)
+        } else {
+            Err(AppError::Vfs(VfsError::PathNotAFolder))
+        }
     }
 
     pub async fn cat(&self, db_pool: &Pool<Postgres>) -> Result<String, AppError> {
@@ -61,7 +152,7 @@ impl NodePath {
         )
         .fetch_optional(db_pool)
         .await
-        .map_err(|_| AppError::Database)?
+        .map_err(|_| AppError::OldDatabase)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
         .map(|rec| rec.data as Option<String>)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
@@ -81,9 +172,7 @@ impl NodePath {
                 NOT is_folder
                 AND "path" @> $1
                 AND array_length("path", 1) = array_length($1, 1) + 1
-
             UNION
-
             SELECT p."path", p.is_folder, p.created_at, c_calc."size"
             FROM
                 node p
@@ -104,7 +193,7 @@ impl NodePath {
         )
         .fetch_all(db_pool)
         .await
-        .map_err(|_| AppError::Database)?;
+        .map_err(|_| AppError::OldDatabase)?;
 
         if paths.len() > 0 {
             Ok(paths)
@@ -137,7 +226,7 @@ impl NodePathName {
         )
         .fetch_all(db_pool)
         .await
-        .map_err(|_| AppError::Database)
+        .map_err(|_| AppError::OldDatabase)
     }
 }
 
@@ -168,7 +257,7 @@ impl NodePathNameData {
             )
             .fetch_optional(db_pool)
             .await
-            .map_err(|_| AppError::Database)?
+            .map_err(|_| AppError::OldDatabase)?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
             .map(|rec| rec.path as Vec<String>),
 
@@ -187,7 +276,7 @@ impl NodePathNameData {
             )
             .fetch_optional(db_pool)
             .await
-            .map_err(|_| AppError::Database)?
+            .map_err(|_| AppError::OldDatabase)?
             .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
             .map(|rec| rec.path as Vec<String>),
         }
@@ -216,7 +305,7 @@ impl NodePathFolderPath {
         )
         .fetch_optional(db_pool)
         .await
-        .map_err(|_| AppError::Database)?
+        .map_err(|_| AppError::OldDatabase)?
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
         .map(|rec| rec.path as Vec<String>)
     }
@@ -241,7 +330,7 @@ impl NodePaths {
                 )
                 .fetch_optional(db_pool)
                 .await
-                .map_err(|_| AppError::Database)
+                .map_err(|_| AppError::OldDatabase)
                 .map(|rec_opt| match rec_opt {
                     Some(_) => (path, true),
                     None => (path, false),

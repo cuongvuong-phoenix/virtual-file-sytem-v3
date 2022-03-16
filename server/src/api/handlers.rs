@@ -1,10 +1,19 @@
 use super::{
-    models::NodePath, AppError, AppResponse, Node, NodeLsItem, NodePathFolderPath, NodePathName,
-    NodePathNameData, NodePaths,
+    models::NodePath, AppError, AppResponse, Node, NodeCr, NodeLsItem, NodePathFolderPath,
+    NodePathName, NodePathNameData, NodePaths,
 };
 use crate::State;
 use axum::{extract::Extension, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
+
+pub async fn cr(
+    Extension(state): Extension<Arc<State>>,
+    Json(node): Json<NodeCr>,
+) -> Result<AppResponse<Node>, AppError> {
+    let node = node.cr(&state.db_pool).await?;
+
+    Ok(AppResponse::new(node, StatusCode::OK))
+}
 
 pub async fn cd(
     Extension(state): Extension<Arc<State>>,

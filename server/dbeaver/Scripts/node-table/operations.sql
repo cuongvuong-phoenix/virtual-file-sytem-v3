@@ -8,6 +8,22 @@ WHERE "path" = ARRAY['/', 'usr'];
 -- ----------------------------------------------------------------
 -- cr PATH [DATA]
 -- ----------------------------------------------------------------
+WITH RECURSIVE rec AS (
+	SELECT
+		ARRAY['/', 'usr', 'non-bin', 'cuong', 'file-created'] AS "path",
+		'Data for `file-created` file' IS NULL AS is_folder,
+		'Data for `file-created` file' AS "data"
+	UNION
+	SELECT "path"[:(array_length("path", 1) - 1)], TRUE AS is_folder, NULL
+	FROM rec
+	WHERE array_length("path", 1) > 1
+)
+INSERT INTO node("path", is_folder, "data")
+SELECT "path", is_folder, "data"
+FROM rec
+ON CONFLICT ("path") DO NOTHING
+RETURNING "path", is_folder, created_at;
+
 -- create new folder.
 INSERT INTO node ("path", is_folder, "data")
 VALUES (ARRAY['/', 'usr', 'holistic', 'new-folder'], NULL IS NULL, NULL)

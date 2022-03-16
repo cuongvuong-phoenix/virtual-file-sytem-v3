@@ -12,6 +12,7 @@ pub use response::*;
 
 pub fn init_routes() -> Router {
     Router::new()
+        .route("/cr", post(cr))
         .route("/cd", post(cd))
         .route("/cat", post(cat))
         .route("/ls", post(ls))
