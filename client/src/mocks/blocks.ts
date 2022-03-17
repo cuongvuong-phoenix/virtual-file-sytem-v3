@@ -12,7 +12,7 @@ export const blocks: Block[] = [
       isFolder: true,
     },
     command: 'cd /usr',
-    ready: true,
+
     createdAt: new Date(),
   },
   // `cr /usr/bin/new-file`
@@ -27,7 +27,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['cr', '/usr/bin/new-file'],
     },
-    ready: true,
+
     data: {
       createdAt: parseISO('2022-03-17T09:38:59.838400Z'),
       id: 49,
@@ -48,7 +48,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['cr', '/usr/non-bin/non-exist-parent/new-file'],
     },
-    ready: true,
+
     data: {
       createdAt: parseISO('2022-03-17T09:39:58.886355Z'),
       id: 51,
@@ -69,7 +69,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['cat', '/usr/bin/sh'],
     },
-    ready: true,
+
     data: 'Data for `sh` file',
     createdAt: new Date(),
   },
@@ -85,7 +85,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['ls', '/share'],
     },
-    ready: true,
+
     data: [
       {
         createdAt: parseISO('2022-03-17T09:36:16.329440Z'),
@@ -116,7 +116,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['find', 'o', '/usr/holistic'],
     },
-    ready: true,
+
     data: [
       {
         createdAt: parseISO('2022-03-17T09:36:16.329440Z'),
@@ -151,7 +151,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['up', '/usr/holistic holistic-2'],
     },
-    ready: true,
+
     data: {
       createdAt: parseISO('2022-03-17T09:49:21.525986Z'),
       id: 60,
@@ -172,7 +172,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['up', '/usr/holistic /share/local'],
     },
-    ready: true,
+
     data: {
       createdAt: parseISO('2022-03-17T09:49:21.525986Z'),
       id: 60,
@@ -193,7 +193,7 @@ export const blocks: Block[] = [
     parsedArgv: {
       _: ['rm', '/usr/holistic /share/local'],
     },
-    ready: true,
+
     data: {
       nonExistedPaths: [['share', 'lib', 'holistic', 'cuong'], ['fkajsdfkjaskdfj']],
       removedPaths: [['share', 'lib', 'holistic']],

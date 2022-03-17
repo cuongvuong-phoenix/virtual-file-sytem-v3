@@ -3,8 +3,10 @@ export function decodePath(pathArr: string[]) {
 }
 
 export function encodePath(path: string, workingPath: string[]) {
+  const result = workingPath.slice();
+
   if (path.startsWith('/')) {
-    workingPath.splice(0, workingPath.length);
+    result.splice(0, result.length);
   }
 
   const pathArr = path.split('/');
@@ -22,11 +24,11 @@ export function encodePath(path: string, workingPath: string[]) {
     if (pathSegment === '.') {
       continue;
     } else if (pathSegment === '..') {
-      workingPath.pop();
+      result.pop();
     } else {
-      workingPath.push(pathSegment);
+      result.push(pathSegment);
     }
   }
 
-  return workingPath;
+  return result;
 }

@@ -7,5 +7,3 @@
     <h1 class="text-teal-600 text-3xl font-bold text-center mt-4">VIRTUAL FILE SYSTEM<br />v3</h1>
   </header>
 </template>
-
-<script setup lang="ts"></script>

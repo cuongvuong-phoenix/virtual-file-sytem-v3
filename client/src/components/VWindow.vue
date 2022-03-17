@@ -38,8 +38,10 @@
 </template>
 
 <script setup lang="ts">
-  import { type Ref, nextTick, onMounted, ref, watch } from 'vue';
-  import { yargs } from '~/composables';
+  import { type Ref, nextTick, onMounted, ref } from 'vue';
+  import { type AxiosError } from 'axios';
+  import { YargsCommand, yargs } from '~/composables';
+  import { axios, encodePath } from '~/helpers';
   import { blocks as mockBlocks } from '~/mocks';
 
   const windowBodyRef = ref<HTMLDivElement | null>(null);
@@ -77,32 +79,66 @@
   ---------------------------------------------------------------- */
   function onEnter(value: string) {
     yargs.parse(value, async (err: any, argv: any, output: string) => {
-      if (err) {
-        return;
-      }
-
       const block: Block = {
         id: blockCount.value++,
-        workingNode: commandBlock.value.workingNode,
+        workingNode: { ...commandBlock.value.workingNode, path: [...commandBlock.value.workingNode.path] },
         command: value,
         parsedArgv: argv,
         data: output.length > 0 ? output : undefined,
         createdAt: new Date(),
       };
 
-      blocks.value.push(block);
+      const blockIndex = blocks.value.push(block) - 1;
+
+      if (err) {
+        block.error = {
+          code: '400',
+          message: err.message,
+        };
+      }
+      // API call.
+      else if (output.length === 0) {
+        await command(blocks.value[blockIndex]);
+      }
 
       // Reset and scroll.
       await nextTick();
 
-      commandBlock.value = {
-        ...commandBlock.value,
-        createdAt: new Date(),
-      };
+      commandBlock.value.createdAt = new Date();
 
       if (windowBodyRef.value) {
         windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
       }
     });
+  }
+
+  async function command(block: Block) {
+    try {
+      block.loading = true;
+
+      const argv = block.parsedArgv!;
+
+      let res;
+
+      switch (argv._[0] as YargsCommand) {
+        case YargsCommand.CD: {
+          res = (
+            await axios.post('/api/cd', {
+              path: encodePath(argv.FOLDER_PATH, block.workingNode.path),
+            })
+          ).data;
+
+          commandBlock.value.workingNode = res.data;
+
+          break;
+        }
+      }
+
+      block.data = res.data;
+    } catch (err) {
+      block.error = (err as AxiosError).response?.data.error;
+    } finally {
+      block.loading = false;
+    }
   }
 </script>

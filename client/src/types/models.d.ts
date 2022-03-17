@@ -37,10 +37,8 @@ interface Block {
   command?: string;
   parsedArgv?: ParsedArgv;
 
-  loading?: boolean;
-  ready?: boolean;
-
   data?: any;
+  loading?: boolean;
   error?: ResponseError;
 
   createdAt: Date;

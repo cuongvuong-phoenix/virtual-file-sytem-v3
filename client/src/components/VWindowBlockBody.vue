@@ -99,7 +99,7 @@
   </template>
 
   <!-- "Error" -->
-  <p v-else-if="block.error" class="text-rose-500">{{ block.error.message }}</p>
+  <p v-else-if="block.error" class="text-rose-700">{{ block.error.message }}</p>
   <!-- END "Error" -->
 </template>
 

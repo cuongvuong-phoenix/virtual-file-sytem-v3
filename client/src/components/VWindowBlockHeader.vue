@@ -21,8 +21,8 @@
 
         <template v-if="!block.isCommand">
           <template v-if="!block.loading">
-            <i-mdi-check v-if="!block.error && block.ready" class="text-teal-500 shrink-0" />
-            <i-mdi-close v-else-if="block.error && block.ready" class="text-rose-500 shrink-0" />
+            <i-mdi-check v-if="!block.error && block.data" class="text-teal-500 shrink-0" />
+            <i-mdi-close v-else-if="block.error" class="text-rose-500 shrink-0" />
           </template>
 
           <i-mdi-loading v-else class="animate-spin text-gray-500 shrink-0" />
