@@ -53,7 +53,8 @@
       id: 1,
       workingNode: {
         id: 1,
-        path: '/',
+        path: [] as string[],
+        isFolder: true,
       },
       command: 'cd /usr',
       ready: true,
@@ -63,7 +64,8 @@
       id: 2,
       workingNode: {
         id: 2,
-        path: '/usr',
+        path: ['usr'],
+        isFolder: true,
       },
       command: 'ls',
       ready: true,
@@ -73,7 +75,8 @@
       id: 3,
       workingNode: {
         id: 2,
-        path: '/usr',
+        path: ['usr', 'holistic'],
+        isFolder: true,
       },
       command: 'cd holistic',
       ready: true,
@@ -83,7 +86,8 @@
       id: 4,
       workingNode: {
         id: 3,
-        path: '/usr/holistic',
+        path: ['usr', 'holistic'],
+        isFolder: true,
       },
       command: 'find o /zzz',
       error: 'Path does not exists',
@@ -94,7 +98,8 @@
       id: 5,
       workingNode: {
         id: 3,
-        path: '/usr/holistic',
+        path: ['usr', 'holistic'],
+        isFolder: true,
       },
       command: 'find o',
       loading: true,
@@ -109,7 +114,7 @@
     id: 5,
     workingNode: {
       id: 3,
-      path: '/usr/holistic',
+      path: ['usr', 'holistic'],
     },
     isCommand: true,
     createdAt: new Date(),
