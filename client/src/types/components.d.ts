@@ -7,6 +7,7 @@ declare module 'vue' {
     IBxFile: typeof import('~icons/bx/file')['default']
     VHeader: typeof import('./../components/VHeader.vue')['default']
     VMain: typeof import('./../components/VMain.vue')['default']
+    VWindow: typeof import('./../components/VWindow.vue')['default']
   }
 }
 

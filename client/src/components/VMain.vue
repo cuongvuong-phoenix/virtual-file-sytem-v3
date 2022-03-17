@@ -1,3 +1,5 @@
 <template>
-  <main>Something main</main>
+  <main>
+    <VWindow />
+  </main>
 </template>
