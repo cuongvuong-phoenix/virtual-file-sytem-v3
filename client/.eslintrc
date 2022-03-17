@@ -1,6 +1,7 @@
 {
   "extends": ["@antfu/eslint-config", "prettier"],
   "rules": {
-    "vue/no-setup-props-destructure": "off"
+    "vue/no-setup-props-destructure": "off",
+    "vue/no-mutating-props": "off"
   }
 }

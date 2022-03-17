@@ -34,7 +34,7 @@
     <!-- END "Left - Working Directory" -->
 
     <!-- "Right - Created Time" -->
-    <div class="flex">
+    <div v-if="!block.isCommand" class="flex">
       <VTriangle :height="28" :width="12" direction="left" color="#fde68a" />
 
       <div
@@ -56,11 +56,10 @@
     <div class="shrink-0">|--</div>
 
     <div v-if="!block.isCommand" class="py-1 px-2">{{ block.command }}</div>
-    <!-- eslint-disable-next-line vue/no-mutating-props -->
     <input
       v-else
+      v-model="block.command"
       class="py-1 px-2 flex-1 min-w-0"
-      :value="block.command"
       autocomplete="off"
       @keydown.enter="event => emit('enter', (event.target as HTMLInputElement).value)"
     />
