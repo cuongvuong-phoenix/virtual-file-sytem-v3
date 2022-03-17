@@ -1,0 +1,8 @@
+input {
+  @apply bg-transparent;
+
+  &:focus,
+  &:focus-visible {
+    @apply outline-none;
+  }
+}

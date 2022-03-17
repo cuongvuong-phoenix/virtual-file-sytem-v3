@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg bg-gray-800 min-h-[20rem] h-[calc(100vh-21rem)] overflow-auto text-gray-300">
+  <div class="rounded-lg bg-gray-800 text-gray-300 overflow-hidden">
     <!-- "Header" -->
     <div class="flex items-center bg-gray-900 justify-between space-x-16 p-2">
       <!-- "Left" -->
@@ -19,18 +19,33 @@
     <!-- END "Header" -->
 
     <!-- "Body" -->
-    <div class="p-2 space-y-4">
+    <div
+      ref="windowBodyRef"
+      class="px-2 py-4 space-y-4 min-h-[16rem] h-[calc(100vh-23rem)] overflow-auto"
+      style="--scrollbar--thumb: #6b7280; --scrollbar--thumb-hover: #7a808d"
+    >
       <VWindowBlock v-for="block in blocks" :key="block.id" :block="block" />
 
-      <VWindowBlock :block="commandBlock" can-command />
+      <VWindowBlock :block="commandBlock" @enter="(value) => onEnter(value)" />
     </div>
     <!-- END "Body" -->
   </div>
 </template>
 
 <script setup lang="ts">
-  import { type Ref, ref } from 'vue';
+  import { type Ref, onMounted, ref } from 'vue';
 
+  const windowBodyRef = ref<HTMLDivElement | null>(null);
+
+  onMounted(() => {
+    if (windowBodyRef.value) {
+      windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
+    }
+  });
+
+  /* ----------------------------------------------------------------
+  Blocks
+  ---------------------------------------------------------------- */
   const blocks = ref([]) as Ref<Block[]>;
 
   blocks.value.push(
@@ -87,6 +102,9 @@
     }
   );
 
+  /* ----------------------------------------------------------------
+  Command Block
+  ---------------------------------------------------------------- */
   const commandBlock = ref({
     id: 5,
     workingNode: {
@@ -96,4 +114,12 @@
     isCommand: true,
     createdAt: new Date(),
   }) as Ref<Block>;
+
+  function onEnter(value: string) {
+    commandBlock.value.command = value;
+
+    if (windowBodyRef.value) {
+      windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
+    }
+  }
 </script>

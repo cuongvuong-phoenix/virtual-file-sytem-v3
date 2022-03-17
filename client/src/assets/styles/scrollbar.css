@@ -1,5 +1,5 @@
 :root {
-  --scrollbar--bg: theme('colors.gray.200');
+  --scrollbar--bg: transparent;
   --scrollbar--thumb: theme('colors.gray.400');
   --scrollbar--thumb-hover: theme('colors.gray.500');
 }

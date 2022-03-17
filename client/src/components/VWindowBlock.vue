@@ -52,6 +52,21 @@
       <!-- END "Right - Created Time" -->
     </div>
     <!-- END "Line 1" -->
+
+    <!-- "Line 2" -->
+    <div class="flex items-center">
+      <div>|--</div>
+
+      <div v-if="!block.isCommand" class="py-1 px-2">{{ block.command }}</div>
+      <!-- eslint-disable-next-line vue/no-mutating-props -->
+      <input
+        v-else
+        class="py-1 px-2 flex-1 min-w-0"
+        autocomplete="off"
+        @keydown.enter="event => emit('enter', (event.target as HTMLInputElement).value)"
+      />
+    </div>
+    <!-- END "Line 2" -->
     <!-- END "Header" -->
   </div>
 </template>
@@ -61,5 +76,9 @@
 
   defineProps<{
     block: Block;
+  }>();
+
+  const emit = defineEmits<{
+    (e: 'enter', value: string): void;
   }>();
 </script>
