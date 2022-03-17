@@ -4,12 +4,21 @@
 
 declare module 'vue' {
   export interface GlobalComponents {
-    IBxFile: typeof import('~icons/bx/file')['default']
+    IMdiCheck: typeof import('~icons/mdi/check')['default']
+    IMdiChevronRight: typeof import('~icons/mdi/chevron-right')['default']
+    IMdiClockTimeEightOutline: typeof import('~icons/mdi/clock-time-eight-outline')['default']
+    IMdiClose: typeof import('~icons/mdi/close')['default']
+    IMdiFileDocumentMultipleOutline: typeof import('~icons/mdi/file-document-multiple-outline')['default']
+    IMdiFolderOpen: typeof import('~icons/mdi/folder-open')['default']
     IMdiGithub: typeof import('~icons/mdi/github')['default']
+    IMdiLoading: typeof import('~icons/mdi/loading')['default']
     VFooter: typeof import('./../components/VFooter.vue')['default']
     VHeader: typeof import('./../components/VHeader.vue')['default']
     VMain: typeof import('./../components/VMain.vue')['default']
+    VTriangle: typeof import('./../components/VTriangle.vue')['default']
     VWindow: typeof import('./../components/VWindow.vue')['default']
+    VWindowBlock: typeof import('./../components/VWindowBlock.vue')['default']
+    VWindowBlockHeader: typeof import('./../components/VWindowBlockHeader.vue')['default']
   }
 }
 
