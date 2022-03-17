@@ -10,14 +10,18 @@ use sqlx::{Acquire, Pool, Postgres};
 // Serializable
 // ----------------------------------------------------------------
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Node {
+    id: i32,
     path: Vec<String>,
     is_folder: bool,
     created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NodeLsItem {
+    id: i32,
     path: Vec<String>,
     is_folder: bool,
     created_at: DateTime<Utc>,
@@ -61,7 +65,7 @@ impl NodeCr {
                         INSERT INTO node ("path", is_folder, "data")
                         VALUES ($1, $2::text IS NULL, $2)
                         ON CONFLICT ("path") DO NOTHING
-                        RETURNING "path", is_folder, created_at;
+                        RETURNING id, "path", is_folder, created_at;
                         "#,
                         &self.path,
                         self.data
@@ -85,7 +89,7 @@ impl NodeCr {
                                 $1::text[] AS "path",
                                 $2::text IS NULL AS is_folder,
                                 $2 AS "data"
-                            UNION
+                            UNION ALL
                             SELECT "path"[:(array_length("path", 1) - 1)], TRUE AS is_folder, NULL
                             FROM rec
                             WHERE array_length("path", 1) > 1
@@ -94,7 +98,7 @@ impl NodeCr {
                         SELECT "path", is_folder, "data"
                         FROM rec
                         ON CONFLICT ("path") DO NOTHING
-                        RETURNING "path", is_folder, created_at;
+                        RETURNING id, "path", is_folder, created_at;
                         "#,
                         &self.path,
                         self.data
@@ -157,10 +161,11 @@ impl NodePath {
     }
 
     pub async fn ls(&self, db_pool: &Pool<Postgres>) -> Result<Vec<NodeLsItem>, AppError> {
-        let paths = sqlx::query_as!(
+        let nodes = sqlx::query_as!(
             NodeLsItem,
             r#"
             SELECT
+                id AS "id!",
                 "path" AS "path!",
                 is_folder AS "is_folder!",
                 created_at AS "created_at!",
@@ -170,12 +175,14 @@ impl NodePath {
                 NOT is_folder
                 AND "path" @> $1
                 AND array_length("path", 1) = array_length($1, 1) + 1
-            UNION
-            SELECT p."path", p.is_folder, p.created_at, c_calc."size"
+            UNION ALL
+            SELECT p.id, p."path", p.is_folder, p.created_at, c_calc."size"
             FROM
                 node p
                 JOIN LATERAL (
-                    SELECT p."path", coalesce(sum(char_length(c."data")), 0) AS "size"
+                    SELECT
+                        p."path",
+                        coalesce(sum(char_length(c."data")), 0) AS "size"
                     FROM node c
                     WHERE
                         NOT c.is_folder
@@ -192,8 +199,8 @@ impl NodePath {
         .fetch_all(db_pool)
         .await?;
 
-        if paths.len() > 0 {
-            Ok(paths)
+        if nodes.len() > 0 {
+            Ok(nodes)
         } else {
             Err(AppError::Vfs(VfsError::PathNotAFolder))
         }
@@ -211,7 +218,7 @@ impl NodePathName {
         sqlx::query_as!(
             Node,
             r#"
-            SELECT "path", is_folder, created_at
+            SELECT id, "path", is_folder, created_at
             FROM node
             WHERE
                 "path" @> $1
@@ -235,9 +242,10 @@ pub struct NodePathNameData {
 }
 
 impl NodePathNameData {
-    pub async fn up(&self, db_pool: &Pool<Postgres>) -> Result<Vec<String>, AppError> {
+    pub async fn up(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
         match &self.data {
-            Some(data) => sqlx::query!(
+            Some(data) => sqlx::query_as!(
+                Node,
                 r#"
                 UPDATE node
                 SET
@@ -246,7 +254,7 @@ impl NodePathNameData {
                 WHERE
                     NOT is_folder
                     AND "path" = $1
-                RETURNING "path";
+                RETURNING id, "path", is_folder, created_at;
                 "#,
                 &self.path,
                 self.name,
@@ -254,10 +262,10 @@ impl NodePathNameData {
             )
             .fetch_optional(db_pool)
             .await?
-            .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile))
-            .map(|rec| rec.path as Vec<String>),
+            .ok_or_else(|| AppError::Vfs(VfsError::PathNotAFile)),
 
-            None => sqlx::query!(
+            None => sqlx::query_as!(
+                Node,
                 r#"
                 UPDATE node
                 SET
@@ -265,15 +273,14 @@ impl NodePathNameData {
                         || ARRAY[$2]
                         || "path"[(array_length($1, 1) + 1):]
                 WHERE "path" @> $1
-                RETURNING "path";
+                RETURNING id, "path", is_folder, created_at;
                 "#,
                 &self.path,
                 self.name
             )
             .fetch_optional(db_pool)
             .await?
-            .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
-            .map(|rec| rec.path as Vec<String>),
+            .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist)),
         }
     }
 }
@@ -285,23 +292,48 @@ pub struct NodePathFolderPath {
 }
 
 impl NodePathFolderPath {
-    pub async fn mv(&self, db_pool: &Pool<Postgres>) -> Result<Vec<String>, AppError> {
-        sqlx::query!(
+    pub async fn mv(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        let mut transaction = db_pool.begin().await?;
+
+        transaction.begin().await?;
+
+        let is_folder_path = sqlx::query!(
+            r#"
+            SELECT is_folder
+            FROM node
+            WHERE "path" = $1
+            "#,
+            &self.folder_path
+        )
+        .fetch_optional(&mut transaction)
+        .await?
+        .ok_or_else(|| AppError::Vfs(VfsError::FolderPathNotExist))?
+        .is_folder as bool;
+
+        if !is_folder_path {
+            return Err(AppError::Vfs(VfsError::FolderPathIsAFile));
+        }
+
+        let node = sqlx::query_as!(
+            Node,
             r#"
             UPDATE node
             SET
                 "path" = $2
                     || "path"[(array_length($1, 1)):]
             WHERE "path" @> $1
-            RETURNING "path", is_folder, "data", created_at;
+            RETURNING id, "path", is_folder, created_at;
             "#,
             &self.path,
             &self.folder_path
         )
         .fetch_optional(db_pool)
         .await?
-        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))
-        .map(|rec| rec.path as Vec<String>)
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?;
+
+        transaction.commit().await?;
+
+        Ok(node)
     }
 }
 

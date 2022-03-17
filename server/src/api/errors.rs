@@ -45,4 +45,8 @@ pub enum VfsError {
     PathNotAFile,
     #[error("path is not a folder")]
     PathNotAFolder,
+    #[error("folder path does not exist")]
+    FolderPathNotExist,
+    #[error("folder path is a file")]
+    FolderPathIsAFile,
 }

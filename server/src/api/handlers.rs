@@ -54,7 +54,7 @@ pub async fn find(
 pub async fn up(
     Extension(state): Extension<Arc<State>>,
     Json(node): Json<NodePathNameData>,
-) -> Result<AppResponse<Vec<String>>, AppError> {
+) -> Result<AppResponse<Node>, AppError> {
     let path = node.up(&state.db_pool).await?;
 
     Ok(AppResponse::new(path, StatusCode::OK))
@@ -63,7 +63,7 @@ pub async fn up(
 pub async fn mv(
     Extension(state): Extension<Arc<State>>,
     Json(node): Json<NodePathFolderPath>,
-) -> Result<AppResponse<Vec<String>>, AppError> {
+) -> Result<AppResponse<Node>, AppError> {
     let path = node.mv(&state.db_pool).await?;
 
     Ok(AppResponse::new(path, StatusCode::OK))
