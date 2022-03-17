@@ -16,8 +16,16 @@ export enum YargsCommand {
 export const yargs = (Yargs() as Argv)
   .command(`${YargsCommand.CD} <FOLDER_PATH>`, 'Change current working directory to specified FOLDER_PATH')
   .command(
-    `${YargsCommand.CR} [-p] <PATH> [DATA]`,
-    'Create a new file if DATA is specified, otherwise create a new folder at the specified PATH'
+    `${YargsCommand.CR} <PATH> [DATA]`,
+    'Create a new file if DATA is specified, otherwise create a new folder at the specified PATH',
+    {
+      p: {
+        alias: 'parents',
+        type: 'boolean',
+        describe: 'Create missing parent folders (if any)',
+        default: false,
+      },
+    }
   )
   .command(`${YargsCommand.CAT} <FILE_PATH>`, 'Show the content of a file at FILE_PATH')
   .command(`${YargsCommand.LS} [FOLDER_PATH]`, 'List out all items directly under a folder')
