@@ -14,9 +14,9 @@ WITH RECURSIVE rec AS (
 		'Data for `file-created` file' IS NULL AS is_folder,
 		'Data for `file-created` file' AS "data"
 	UNION ALL
-	SELECT "path"[:(array_length("path", 1) - 1)], TRUE AS is_folder, NULL
+	SELECT "path"[:(array_upper("path", 1) - 1)], TRUE AS is_folder, NULL
 	FROM rec
-	WHERE array_length("path", 1) > 1
+	WHERE array_upper("path", 1) > 1
 )
 INSERT INTO node("path", is_folder, "data")
 SELECT "path", is_folder, "data"
@@ -51,8 +51,8 @@ SELECT id, "path", is_folder, created_at, char_length("data") AS "size"
 FROM node
 WHERE
 	NOT is_folder
-	AND "path" @> ARRAY['share']
-	AND array_length("path", 1) = array_length(ARRAY['share'], 1) + 1
+	AND "path" @> ARRAY[]::text[]
+	AND array_upper("path", 1) = coalesce(array_upper(ARRAY[]::text[], 1), 0) + 1
 UNION ALL
 	SELECT p.id, p."path", p.is_folder, p.created_at, c_calc."size"
 	FROM
@@ -63,12 +63,12 @@ UNION ALL
 	        WHERE
 	            NOT c.is_folder
 	            AND c."path" @> p."path"
-	            AND array_length(c."path", 1) = array_length(p."path", 1) + 1
+	            AND array_upper(c."path", 1) = array_upper(p."path", 1) + 1
 	    ) c_calc ON p.id = c_calc.id
 	WHERE
 		is_folder
-		AND p."path" @> ARRAY['share']
-		AND array_length(p."path", 1) = array_length(ARRAY['share'], 1) + 1;
+		AND p."path" @> ARRAY[]::text[]
+		AND array_upper(p."path", 1) = coalesce(array_upper(ARRAY[]::text[], 1), 0) + 1;
 
 -- ----------------------------------------------------------------
 -- find NAME
@@ -76,9 +76,9 @@ UNION ALL
 SELECT id, "path", is_folder, "data", created_at
 FROM node
 WHERE
-	"path" @> ARRAY['usr', 'holistic']
-	AND array_length("path", 1) > array_length(ARRAY['usr', 'holistic'], 1)
-	AND "path"[array_length("path", 1)] LIKE '%o%';
+	"path" @> ARRAY[]::TEXT[]
+	AND array_upper("path", 1) > coalesce(array_upper(ARRAY[]::TEXT[], 1), 0)
+	AND "path"[array_upper("path", 1)] LIKE '%e%';
 
 -- ----------------------------------------------------------------
 -- up PATH NAME [DATA]
@@ -87,7 +87,7 @@ WHERE
 UPDATE node
 SET
     "path" = ARRAY['usr', 'holistic-2']
-		|| "path"[(array_length(ARRAY['usr', 'holistic'], 1) + 1):]
+		|| "path"[(coalesce(array_upper(ARRAY['usr', 'holistic'], 1), 0) + 1):]
 WHERE "path" @> ARRAY['usr', 'holistic']
 RETURNING id, "path", is_folder, "data", created_at;
 
@@ -95,7 +95,7 @@ RETURNING id, "path", is_folder, "data", created_at;
 UPDATE node
 SET
     "path" = ARRAY['usr', 'holistic', 'new-folder', 'new-file']
-		|| "path"[(array_length(ARRAY['usr', 'holistic', 'new-folder', 'new-file'], 1) + 1):],
+		|| "path"[((coalesce(array_upper(ARRAY['usr', 'holistic', 'new-folder', 'new-file'], 1), 0) + 1)):],
     "data" = 'Updated data'
 WHERE "path" = ARRAY['usr', 'holistic', 'new-folder', 'new-file']
 RETURNING id, "path", is_folder, "data", created_at;
@@ -106,7 +106,7 @@ RETURNING id, "path", is_folder, "data", created_at;
 UPDATE node
 SET
     "path" = ARRAY['share', 'lib']
-		|| "path"[(array_length(ARRAY['usr', 'holistic-2'], 1)):]
+		|| "path"[(coalesce(array_upper(ARRAY['usr', 'holistic-2'], 1), 0)):]
 WHERE "path" @> ARRAY['usr', 'holistic-2']
 RETURNING id, "path", is_folder, "data", created_at;
 

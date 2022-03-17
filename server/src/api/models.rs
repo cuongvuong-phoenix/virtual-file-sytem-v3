@@ -48,7 +48,7 @@ impl NodeCr {
             r#"
             SELECT is_folder
             FROM node
-            WHERE "path" = ($1::text[])[:(array_length($1, 1) - 1)]
+            WHERE "path" = ($1::text[])[:(array_upper($1, 1) - 1)]
             "#,
             &self.path
         )
@@ -90,9 +90,9 @@ impl NodeCr {
                                 $2::text IS NULL AS is_folder,
                                 $2 AS "data"
                             UNION ALL
-                            SELECT "path"[:(array_length("path", 1) - 1)], TRUE AS is_folder, NULL
+                            SELECT "path"[:(array_upper("path", 1) - 1)], TRUE AS is_folder, NULL
                             FROM rec
-                            WHERE array_length("path", 1) > 1
+                            WHERE array_upper("path", 1) > 1
                         )
                         INSERT INTO node("path", is_folder, "data")
                         SELECT "path", is_folder, "data"
@@ -173,7 +173,7 @@ impl NodePath {
             WHERE
                 NOT is_folder
                 AND "path" @> $1
-                AND array_length("path", 1) = array_length($1, 1) + 1
+                AND array_upper("path", 1) = coalesce(array_upper($1, 1), 0) + 1
             UNION ALL
             SELECT p.id, p."path", p.is_folder, p.created_at, c_calc."size"
             FROM
@@ -186,12 +186,12 @@ impl NodePath {
                     WHERE
                         NOT c.is_folder
                         AND c."path" @> p."path"
-                        AND array_length(c."path", 1) = array_length(p."path", 1) + 1
+                        AND array_upper(c."path", 1) = array_upper(p."path", 1) + 1
                 ) c_calc ON p."path" = c_calc."path"
             WHERE
                 is_folder
                 AND p."path" @> $1
-                AND array_length(p."path", 1) = array_length($1, 1) + 1;
+                AND array_upper(p."path", 1) = coalesce(array_upper($1, 1), 0) + 1;
             "#,
             &self.path
         )
@@ -221,8 +221,8 @@ impl NodePathName {
             FROM node
             WHERE
                 "path" @> $1
-                AND array_length("path", 1) > array_length($1, 1)
-                AND "path"[array_length("path", 1)] LIKE '%' || $2 || '%';
+                AND array_upper("path", 1) > coalesce(array_upper($1, 1), 0)
+                AND "path"[array_upper("path", 1)] LIKE '%' || $2 || '%';
             "#,
             &self.path,
             self.name
@@ -248,7 +248,7 @@ impl NodePathNameData {
                 r#"
                 UPDATE node
                 SET
-                    "path" = "path"[:(array_length("path", 1) - 1)] || ARRAY[$2],
+                    "path" = "path"[:(array_upper("path", 1) - 1)] || ARRAY[$2],
                     "data" = $3
                 WHERE
                     NOT is_folder
@@ -268,9 +268,9 @@ impl NodePathNameData {
                 r#"
                 UPDATE node
                 SET
-                    "path" = "path"[:(array_length($1, 1) - 1)]
+                    "path" = "path"[:(coalesce(array_upper($1, 1), 0) - 1)]
                         || ARRAY[$2]
-                        || "path"[(array_length($1, 1) + 1):]
+                        || "path"[(coalesce(array_upper($1, 1), 0) + 1):]
                 WHERE "path" @> $1
                 RETURNING id, "path", is_folder, created_at;
                 "#,
@@ -319,7 +319,7 @@ impl NodePathFolderPath {
             UPDATE node
             SET
                 "path" = $2
-                    || "path"[(array_length($1, 1)):]
+                    || "path"[(coalesce(array_upper($1, 1), 0)):]
             WHERE "path" @> $1
             RETURNING id, "path", is_folder, created_at;
             "#,
