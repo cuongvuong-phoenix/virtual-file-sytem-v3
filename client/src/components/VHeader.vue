@@ -1,9 +1,11 @@
 <template>
-  <header>{{ msg }}</header>
+  <header>
+    <div class="flex items-center justify-center">
+      <i-bx-file class="h-12 w-12 text-teal-600" />
+    </div>
+
+    <h1 class="text-teal-600 text-3xl font-bold text-center mt-4">VIRTUAL FILE SYSTEM<br />v3</h1>
+  </header>
 </template>
 
-<script setup lang="ts">
-  const { msg = 'Header' } = defineProps<{
-    msg?: String;
-  }>();
-</script>
+<script setup lang="ts"></script>

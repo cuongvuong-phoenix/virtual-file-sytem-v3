@@ -4,6 +4,16 @@ module.exports = {
     fontFamily: {
       mono: "'JetBrains Mono', monospace",
     },
+    container: {
+      center: true,
+      padding: {
+        'DEFAULT': '1.5rem',
+        'sm': '3rem',
+        'md': '4rem',
+        'lg': '8rem',
+        '2xl': '16rem',
+      },
+    },
     extend: {},
   },
   plugins: [],

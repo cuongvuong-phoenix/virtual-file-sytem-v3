@@ -1,5 +1,7 @@
 <template>
-  <VHeader />
+  <div class="container">
+    <VHeader />
 
-  <div class="font-mono">Virtual File System v3</div>
+    <VMain class="mt-8" />
+  </div>
 </template>

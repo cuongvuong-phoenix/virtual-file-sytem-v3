@@ -4,7 +4,9 @@
 
 declare module 'vue' {
   export interface GlobalComponents {
+    IBxFile: typeof import('~icons/bx/file')['default']
     VHeader: typeof import('./../components/VHeader.vue')['default']
+    VMain: typeof import('./../components/VMain.vue')['default']
   }
 }
 
