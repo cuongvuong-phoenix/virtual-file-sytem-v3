@@ -19,14 +19,29 @@ interface VfsNodeLsItem {
 /* ----------------------------------------------------------------
 Block
 ---------------------------------------------------------------- */
+interface ResponseError {
+  code: string;
+  message: string;
+}
+
+interface ParsedArgv {
+  _: string[];
+  [key: string]: any;
+}
+
 interface Block {
   id: number;
   workingNode: VfsNode;
+
   isCommand?: boolean;
   command?: string;
+  parsedArgv?: ParsedArgv;
+
   loading?: boolean;
   ready?: boolean;
+
   data?: any;
-  error?: any;
+  error?: ResponseError;
+
   createdAt: Date;
 }

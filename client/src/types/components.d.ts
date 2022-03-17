@@ -18,7 +18,6 @@ declare module 'vue' {
     VTriangle: typeof import('./../components/VTriangle.vue')['default']
     VWindow: typeof import('./../components/VWindow.vue')['default']
     VWindowBlock: typeof import('./../components/VWindowBlock.vue')['default']
-    VWindowBlockHeader: typeof import('./../components/VWindowBlockHeader.vue')['default']
   }
 }
 
