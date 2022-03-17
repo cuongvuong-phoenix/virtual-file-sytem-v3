@@ -160,6 +160,27 @@ impl NodePath {
     }
 
     pub async fn ls(&self, db_pool: &Pool<Postgres>) -> Result<Vec<NodeLsItem>, AppError> {
+        let mut transaction = db_pool.begin().await?;
+
+        transaction.begin().await?;
+
+        let is_folder = sqlx::query!(
+            r#"
+            SELECT is_folder
+            FROM node
+            WHERE "path" = $1
+            "#,
+            &self.path
+        )
+        .fetch_optional(&mut transaction)
+        .await?
+        .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?
+        .is_folder as bool;
+
+        if !is_folder {
+            return Err(AppError::Vfs(VfsError::PathNotAFolder));
+        }
+
         let nodes = sqlx::query_as!(
             NodeLsItem,
             r#"
@@ -198,11 +219,9 @@ impl NodePath {
         .fetch_all(db_pool)
         .await?;
 
-        if nodes.len() > 0 {
-            Ok(nodes)
-        } else {
-            Err(AppError::Vfs(VfsError::PathNotAFolder))
-        }
+        transaction.commit().await?;
+
+        Ok(nodes)
     }
 }
 
