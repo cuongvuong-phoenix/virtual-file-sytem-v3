@@ -122,23 +122,22 @@ pub struct NodePath {
 }
 
 impl NodePath {
-    pub async fn cd(&self, db_pool: &Pool<Postgres>) -> Result<bool, AppError> {
-        let is_folder = sqlx::query!(
+    pub async fn cd(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        let node = sqlx::query_as!(
+            Node,
             r#"
-            SELECT is_folder
+            SELECT id, "path", is_folder, created_at
             FROM node
-            WHERE
-                "path" = $1
+            WHERE "path" = $1
             "#,
             &self.path
         )
         .fetch_optional(db_pool)
         .await?
-        .map(|rec| rec.is_folder as bool)
         .ok_or_else(|| AppError::Vfs(VfsError::PathNotExist))?;
 
-        if is_folder {
-            Ok(true)
+        if node.is_folder {
+            Ok(node)
         } else {
             Err(AppError::Vfs(VfsError::PathNotAFolder))
         }

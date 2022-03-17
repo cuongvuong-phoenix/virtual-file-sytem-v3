@@ -18,7 +18,7 @@ pub async fn cr(
 pub async fn cd(
     Extension(state): Extension<Arc<State>>,
     Json(node): Json<NodePath>,
-) -> Result<AppResponse<bool>, AppError> {
+) -> Result<AppResponse<Node>, AppError> {
     let is_folder = node.cd(&state.db_pool).await?;
 
     Ok(AppResponse::new(is_folder, StatusCode::OK))
