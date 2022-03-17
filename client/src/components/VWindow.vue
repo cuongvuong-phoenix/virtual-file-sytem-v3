@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg bg-gray-800 min-h-[20rem] h-[calc(100vh-17rem)] overflow-auto text-gray-300">
+  <div class="rounded-lg bg-gray-800 min-h-[20rem] h-[calc(100vh-21rem)] overflow-auto text-gray-300">
     <!-- "Header" -->
     <div class="flex items-center bg-gray-900 justify-between space-x-16 p-2">
       <!-- "Left" -->

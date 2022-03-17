@@ -5,6 +5,8 @@
 declare module 'vue' {
   export interface GlobalComponents {
     IBxFile: typeof import('~icons/bx/file')['default']
+    IMdiGithub: typeof import('~icons/mdi/github')['default']
+    VFooter: typeof import('./../components/VFooter.vue')['default']
     VHeader: typeof import('./../components/VHeader.vue')['default']
     VMain: typeof import('./../components/VMain.vue')['default']
     VWindow: typeof import('./../components/VWindow.vue')['default']
