@@ -38,6 +38,6 @@ export const yargs = (Yargs() as Argv)
     'Update the file/folder at PATH to have new NAME and, optionally, new DATA'
   )
   .command(`${YargsCommand.MV} <PATH> <FOLDER_PATH>`, 'Move a file/folder at PATH into the destination FOLDER_PATH')
-  .command(`${YargsCommand.RM} <PATH..>`, 'Remove files/folders at the specified PATHs')
+  .command(`${YargsCommand.RM} <PATHS..>`, 'Remove files/folders at the specified PATHs')
   .wrap(null)
   .version('3.0.0');

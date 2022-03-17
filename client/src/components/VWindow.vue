@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
   import { type Ref, nextTick, onMounted, ref } from 'vue';
+  import { parseISO } from 'date-fns';
   import { type AxiosError } from 'axios';
   import { YargsCommand, yargs } from '~/composables';
   import { axios, encodePath } from '~/helpers';
@@ -102,9 +103,10 @@
       }
 
       // Reset and scroll.
-      await nextTick();
-
       commandBlock.value.createdAt = new Date();
+      commandBlock.value.command = undefined;
+
+      await nextTick();
 
       if (windowBodyRef.value) {
         windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
@@ -124,17 +126,99 @@
         case YargsCommand.CD: {
           res = (
             await axios.post('/api/cd', {
-              path: encodePath(argv.FOLDER_PATH, block.workingNode.path),
+              path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
             })
           ).data;
 
+          block.data = { ...res.data, createdAt: parseISO(res.data.createdAt) };
           commandBlock.value.workingNode = res.data;
 
           break;
         }
-      }
+        case YargsCommand.CR: {
+          res = (
+            await axios.post('/api/cr', {
+              path: encodePath(block.workingNode.path, argv.PATH),
+              data: argv.DATA,
+              parents_opt: argv.p,
+            })
+          ).data;
 
-      block.data = res.data;
+          block.data = { ...res.data, createdAt: parseISO(res.data.createdAt) };
+
+          break;
+        }
+        case YargsCommand.CAT: {
+          res = (
+            await axios.post('/api/cat', {
+              path: encodePath(block.workingNode.path, argv.FILE_PATH),
+            })
+          ).data;
+
+          block.data = res.data;
+
+          break;
+        }
+        case YargsCommand.LS: {
+          res = (
+            await axios.post('/api/ls', {
+              path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
+            })
+          ).data;
+
+          block.data = res.data.map((node: any) => ({ ...node, createdAt: parseISO(node.createdAt) }));
+
+          break;
+        }
+        case YargsCommand.FIND: {
+          res = (
+            await axios.post('/api/find', {
+              path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
+              name: argv.NAME,
+            })
+          ).data;
+
+          block.data = res.data.map((node: any) => ({ ...node, createdAt: parseISO(node.createdAt) }));
+
+          break;
+        }
+        case YargsCommand.UP: {
+          res = (
+            await axios.post('/api/up', {
+              path: encodePath(block.workingNode.path, argv.PATH),
+              name: argv.NAME,
+              data: argv.DATA,
+            })
+          ).data;
+
+          block.data = { ...res.data, createdAt: parseISO(res.data.createdAt) };
+
+          break;
+        }
+        case YargsCommand.MV: {
+          res = (
+            await axios.post('/api/mv', {
+              path: encodePath(block.workingNode.path, argv.PATH),
+              folder_path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
+            })
+          ).data;
+
+          block.data = { ...res.data, createdAt: parseISO(res.data.createdAt) };
+
+          break;
+        }
+        case YargsCommand.RM: {
+          res = (
+            await axios.post('/api/rm', {
+              paths: argv.PATHS.map((path: string) => encodePath(block.workingNode.path, path)),
+            })
+          ).data;
+
+          block.data = res.data;
+
+          break;
+        }
+      }
     } catch (err) {
       block.error = (err as AxiosError).response?.data.error;
     } finally {
