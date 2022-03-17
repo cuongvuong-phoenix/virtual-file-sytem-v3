@@ -64,7 +64,7 @@
                 'text-cyan-500 font-bold': node.isFolder,
               }"
             >
-              {{ normalizePath(node.path) }}
+              {{ decodePath(node.path) }}
             </td>
           </tr>
         </tbody>
@@ -74,13 +74,13 @@
 
     <!-- "up PATH NAME [DATA]" -->
     <div v-else-if="block.parsedArgv._[0] === YargsCommand.UP">
-      {{ normalizePath(block.data.path) }}
+      {{ decodePath(block.data.path) }}
     </div>
     <!-- END "up PATH NAME [DATA]" -->
 
     <!-- "mv PATH FOLDER_PATH" -->
     <div v-else-if="block.parsedArgv._[0] === YargsCommand.MV">
-      {{ normalizePath(block.data.path) }}
+      {{ decodePath(block.data.path) }}
     </div>
     <!-- END "mv PATH FOLDER_PATH" -->
 
@@ -91,7 +91,7 @@
           :class="{
             'text-cyan-500 font-bold': path.isFolder,
           }"
-          >{{ normalizePath(path) }}</span
+          >{{ decodePath(path) }}</span
         >
       </p>
     </div>
@@ -105,7 +105,8 @@
 
 <script setup lang="ts">
   import { format } from 'date-fns';
-  import { YargsCommand, normalizePath } from '~/composables';
+  import { YargsCommand } from '~/composables';
+  import { decodePath } from '~/helpers';
   import { DateFormat } from '~/constants';
 
   defineProps<{

@@ -8,12 +8,12 @@
       <div class="flex items-center flex-1 min-w-0 space-x-2">
         <div class="flex truncate">
           <div
-            :title="normalizePath(block.workingNode.path)"
+            :title="decodePath(block.workingNode.path)"
             class="py-0.5 px-2 flex items-center truncate bg-blue-400 text-gray-900 space-x-2 rounded-l"
           >
             <i-mdi-folder-open class="shrink-0" />
 
-            <span class="truncate">{{ normalizePath(block.workingNode.path) }}</span>
+            <span class="truncate">{{ decodePath(block.workingNode.path) }}</span>
           </div>
 
           <VTriangle :height="28" :width="12" color="#60a5fa" />
@@ -71,7 +71,7 @@
 <script setup lang="ts">
   import { format } from 'date-fns';
   import { DateFormat } from '~/constants';
-  import { normalizePath } from '~/composables';
+  import { decodePath } from '~/helpers';
 
   defineProps<{
     block: Block;

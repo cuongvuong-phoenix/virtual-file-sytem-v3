@@ -77,18 +77,22 @@
   ---------------------------------------------------------------- */
   function onEnter(value: string) {
     yargs.parse(value, async (err: any, argv: any, output: string) => {
+      if (err) {
+        return;
+      }
+
       const block: Block = {
         id: blockCount.value++,
         workingNode: commandBlock.value.workingNode,
         command: value,
         parsedArgv: argv,
         data: output.length > 0 ? output : undefined,
-        error: err,
         createdAt: new Date(),
       };
 
       blocks.value.push(block);
 
+      // Reset and scroll.
       await nextTick();
 
       commandBlock.value = {
