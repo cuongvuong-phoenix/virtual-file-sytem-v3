@@ -3,6 +3,7 @@ import { type Argv } from 'yargs';
 import Yargs from 'https://unpkg.com/yargs@16.0.0-beta.1/browser.mjs';
 
 export enum YargsCommand {
+  // Apis.
   CD = 'cd',
   CR = 'cr',
   CAT = 'cat',
@@ -11,6 +12,8 @@ export enum YargsCommand {
   UP = 'up',
   MV = 'mv',
   RM = 'rm',
+  // Extras.
+  CLEAR = 'clear',
 }
 
 export const yargs = (Yargs() as Argv)
@@ -39,5 +42,6 @@ export const yargs = (Yargs() as Argv)
   )
   .command(`${YargsCommand.MV} <PATH> <FOLDER_PATH>`, 'Move a file/folder at PATH into the destination FOLDER_PATH')
   .command(`${YargsCommand.RM} <PATHS..>`, 'Remove files/folders at the specified PATHs')
+  .command(`${YargsCommand.CLEAR}`, 'Clear the terminal')
   .wrap(null)
   .version('3.0.0');
