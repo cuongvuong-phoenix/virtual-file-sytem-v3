@@ -1,0 +1,27 @@
+:root {
+  --scrollbar--bg: theme('colors.gray.200');
+  --scrollbar--thumb: theme('colors.gray.400');
+  --scrollbar--thumb-hover: theme('colors.gray.500');
+}
+
+* {
+  scrollbar-color: var(--scrollbar--thumb) var(--scrollbar--bg);
+}
+
+::-webkit-scrollbar {
+  width: 0.5rem;
+}
+::-webkit-scrollbar:horizontal {
+  height: 0.5rem;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar--bg);
+  border-radius: 1rem;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar--thumb);
+  border-radius: 1rem;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar--thumb-hover);
+}
