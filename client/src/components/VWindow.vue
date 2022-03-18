@@ -40,10 +40,8 @@
 <script setup lang="ts">
   import { type Ref, nextTick, onMounted, ref } from 'vue';
   import { parseISO } from 'date-fns';
-  import { type AxiosError } from 'axios';
   import { YargsCommand, yargs } from '~/composables';
   import { axios, encodePath } from '~/helpers';
-  import { blocks as mockBlocks } from '~/mocks';
   import type VWindowBlockHeader from '~/components/VWindowBlockHeader.vue';
 
   const windowBodyRef = ref<HTMLDivElement | null>(null);
@@ -60,8 +58,6 @@
   const blockCount = ref(0);
 
   const blocks = ref([]) as Ref<Block[]>;
-
-  blocks.value.push(...mockBlocks);
 
   /* ----------------------------------------------------------------
   Command Block
