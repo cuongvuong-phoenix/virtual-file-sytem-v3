@@ -17,7 +17,7 @@ export default defineConfig({
       reactivityTransform: true,
     }),
     icons({
-      scale: 1.25,
+      scale: 1.5,
     }),
     components({
       dirs: ['src/components'],
