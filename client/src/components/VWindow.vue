@@ -32,6 +32,10 @@
       <div v-if="!commandBlock.loading">
         <VWindowBlockHeader ref="commandBlockRef" :block="commandBlock" @enter="(value) => onEnter(value)" />
       </div>
+
+      <div v-if="!welcomed" class="flex items-center justify-center text-gray-600">
+        {{ 'Type `--help` or `[command] --help` to get some help' }}
+      </div>
     </div>
     <!-- END "Body" -->
   </div>
@@ -51,6 +55,11 @@
       windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
     }
   });
+
+  /* ----------------------------------------------------------------
+  Welcome
+  ---------------------------------------------------------------- */
+  const welcomed = ref(false);
 
   /* ----------------------------------------------------------------
   Blocks
@@ -78,6 +87,10 @@
   Handler
   ---------------------------------------------------------------- */
   function onEnter(value: string) {
+    if (!welcomed.value) {
+      welcomed.value = true;
+    }
+
     yargs.parse(value, async (err: any, argv: any, output: string) => {
       commandBlock.value.loading = true;
 
