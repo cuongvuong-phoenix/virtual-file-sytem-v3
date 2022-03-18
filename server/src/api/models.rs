@@ -40,6 +40,8 @@ pub struct NodeCr {
 
 impl NodeCr {
     pub async fn cr(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        do_manipulate_root_path(&self.path)?;
+
         let mut transaction = db_pool.begin().await?;
 
         transaction.begin().await?;
@@ -261,6 +263,8 @@ pub struct NodePathNameData {
 
 impl NodePathNameData {
     pub async fn up(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        do_manipulate_root_path(&self.path)?;
+
         match &self.data {
             Some(data) => sqlx::query_as!(
                 Node,
@@ -311,6 +315,8 @@ pub struct NodePathFolderPath {
 
 impl NodePathFolderPath {
     pub async fn mv(&self, db_pool: &Pool<Postgres>) -> Result<Node, AppError> {
+        do_manipulate_root_path(&self.path)?;
+
         let mut transaction = db_pool.begin().await?;
 
         transaction.begin().await?;
@@ -362,6 +368,17 @@ pub struct NodePaths {
 
 impl NodePaths {
     pub async fn rm(&self, db_pool: &Pool<Postgres>) -> Json<Value> {
+        for path in &self.paths {
+            if path.len() == 0 {
+                return Json(json!({
+                    "error": {
+                        "code": "400",
+                        "message": "cannot delete root path"
+                    }
+                }));
+            }
+        }
+
         let a: Vec<Result<(&Vec<String>, bool), AppError>> =
             future::join_all(self.paths.iter().map(|path| async move {
                 sqlx::query!(
@@ -398,4 +415,12 @@ impl NodePaths {
             }
         }))
     }
+}
+
+fn do_manipulate_root_path(path: &[String]) -> Result<(), AppError> {
+    if path.len() == 0 {
+        return Err(AppError::Vfs(VfsError::ManipulateRootPath));
+    }
+
+    Ok(())
 }

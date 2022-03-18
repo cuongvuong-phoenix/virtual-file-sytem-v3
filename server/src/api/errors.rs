@@ -33,6 +33,8 @@ impl IntoResponse for AppError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum VfsError {
+    #[error("cannot manipulate root path")]
+    ManipulateRootPath,
     #[error("parent path is a file")]
     ParentPathIsAFile,
     #[error("parent path does not exist")]
