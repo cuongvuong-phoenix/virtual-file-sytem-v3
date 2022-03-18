@@ -1,18 +1,18 @@
 <template>
-  <div class="rounded-lg bg-gray-800 text-gray-300 overflow-hidden">
+  <div class="overflow-hidden text-gray-300 bg-gray-800 rounded-lg">
     <!-- "Header" -->
-    <div class="flex items-center bg-gray-900 justify-between space-x-16 p-2">
+    <div class="flex items-center justify-between p-2 space-x-16 bg-gray-900">
       <!-- "Left" -->
       <div class="flex items-center space-x-2">
-        <div class="rounded-full w-4 h-4 bg-cyan-400"></div>
+        <div class="w-4 h-4 rounded-full bg-cyan-400"></div>
       </div>
       <!-- END "Left" -->
 
       <!-- "Right" -->
       <div class="flex items-center justify-end space-x-2">
-        <div class="rounded-full w-4 h-4 bg-amber-500"></div>
-        <div class="rounded-full w-4 h-4 bg-green-600"></div>
-        <div class="rounded-full w-4 h-4 bg-rose-600"></div>
+        <div class="w-4 h-4 rounded-full bg-amber-500"></div>
+        <div class="w-4 h-4 bg-green-600 rounded-full"></div>
+        <div class="w-4 h-4 rounded-full bg-rose-600"></div>
       </div>
       <!-- END "Right" -->
     </div>
@@ -29,8 +29,8 @@
         <VWindowBlockBody :block="block" />
       </div>
 
-      <div>
-        <VWindowBlockHeader :block="commandBlock" @enter="(value) => onEnter(value)" />
+      <div v-if="!commandBlock.loading">
+        <VWindowBlockHeader ref="commandBlockRef" :block="commandBlock" @enter="(value) => onEnter(value)" />
       </div>
     </div>
     <!-- END "Body" -->
@@ -44,6 +44,7 @@
   import { YargsCommand, yargs } from '~/composables';
   import { axios, encodePath } from '~/helpers';
   import { blocks as mockBlocks } from '~/mocks';
+  import type VWindowBlockHeader from '~/components/VWindowBlockHeader.vue';
 
   const windowBodyRef = ref<HTMLDivElement | null>(null);
 
@@ -65,11 +66,13 @@
   /* ----------------------------------------------------------------
   Command Block
   ---------------------------------------------------------------- */
+  const commandBlockRef = ref<InstanceType<typeof VWindowBlockHeader>>();
+
   const commandBlock = ref({
     id: -1,
     workingNode: {
       id: 3,
-      path: ['usr', 'holistic'],
+      path: [] as string[],
     },
     isCommand: true,
     createdAt: new Date(),
@@ -80,6 +83,8 @@
   ---------------------------------------------------------------- */
   function onEnter(value: string) {
     yargs.parse(value, async (err: any, argv: any, output: string) => {
+      commandBlock.value.loading = true;
+
       const block: Block = {
         id: blockCount.value++,
         workingNode: { ...commandBlock.value.workingNode, path: [...commandBlock.value.workingNode.path] },
@@ -105,11 +110,16 @@
       // Reset and scroll.
       commandBlock.value.createdAt = new Date();
       commandBlock.value.command = undefined;
+      commandBlock.value.loading = false;
 
       await nextTick();
 
       if (windowBodyRef.value) {
         windowBodyRef.value.scrollTop = windowBodyRef.value.scrollHeight;
+      }
+
+      if (commandBlockRef.value?.inputRef) {
+        commandBlockRef.value.inputRef.focus();
       }
     });
   }
@@ -120,14 +130,12 @@
 
       const argv = block.parsedArgv!;
 
-      let res;
-
       switch (argv._[0] as YargsCommand) {
         /* ----------------------------------------------------------------
         Apis
         ---------------------------------------------------------------- */
         case YargsCommand.CD: {
-          res = (
+          const res = (
             await axios.post('/api/cd', {
               path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
             })
@@ -139,7 +147,7 @@
           break;
         }
         case YargsCommand.CR: {
-          res = (
+          const res = (
             await axios.post('/api/cr', {
               path: encodePath(block.workingNode.path, argv.PATH),
               data: argv.DATA,
@@ -152,7 +160,7 @@
           break;
         }
         case YargsCommand.CAT: {
-          res = (
+          const res = (
             await axios.post('/api/cat', {
               path: encodePath(block.workingNode.path, argv.FILE_PATH),
             })
@@ -163,7 +171,7 @@
           break;
         }
         case YargsCommand.LS: {
-          res = (
+          const res = (
             await axios.post('/api/ls', {
               path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
             })
@@ -174,7 +182,7 @@
           break;
         }
         case YargsCommand.FIND: {
-          res = (
+          const res = (
             await axios.post('/api/find', {
               path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
               name: argv.NAME,
@@ -186,7 +194,7 @@
           break;
         }
         case YargsCommand.UP: {
-          res = (
+          const res = (
             await axios.post('/api/up', {
               path: encodePath(block.workingNode.path, argv.PATH),
               name: argv.NAME,
@@ -199,7 +207,7 @@
           break;
         }
         case YargsCommand.MV: {
-          res = (
+          const res = (
             await axios.post('/api/mv', {
               path: encodePath(block.workingNode.path, argv.PATH),
               folder_path: encodePath(block.workingNode.path, argv.FOLDER_PATH),
@@ -211,7 +219,7 @@
           break;
         }
         case YargsCommand.RM: {
-          res = (
+          const res = (
             await axios.post('/api/rm', {
               paths: argv.PATHS.map((path: string) => encodePath(block.workingNode.path, path)),
             })

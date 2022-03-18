@@ -25,7 +25,7 @@
             <i-mdi-close v-else-if="block.error" class="text-rose-500 shrink-0" />
           </template>
 
-          <i-mdi-loading v-else class="animate-spin text-gray-500 shrink-0" />
+          <i-mdi-loading v-else class="text-gray-500 animate-spin shrink-0" />
         </template>
 
         <i-mdi-chevron-right v-else class="text-fuchsia-400 shrink-0" />
@@ -55,11 +55,12 @@
   <div class="flex items-start">
     <div class="shrink-0">|--</div>
 
-    <div v-if="!block.isCommand" class="py-1 px-2">{{ block.command }}</div>
+    <div v-if="!block.isCommand" class="px-2 py-1">{{ block.command }}</div>
     <input
       v-else
+      ref="inputRef"
       v-model="block.command"
-      class="py-1 px-2 flex-1 min-w-0"
+      class="flex-1 min-w-0 px-2 py-1"
       autocomplete="off"
       @keydown.enter="event => emit('enter', (event.target as HTMLInputElement).value)"
     />
@@ -69,6 +70,7 @@
 
 <script setup lang="ts">
   import { format } from 'date-fns';
+  import { ref } from 'vue';
   import { DateFormat } from '~/constants';
   import { decodePath } from '~/helpers';
 
@@ -79,4 +81,10 @@
   const emit = defineEmits<{
     (e: 'enter', value: string): void;
   }>();
+
+  const inputRef = ref<HTMLInputElement | null>(null);
+
+  defineExpose({
+    inputRef,
+  });
 </script>
