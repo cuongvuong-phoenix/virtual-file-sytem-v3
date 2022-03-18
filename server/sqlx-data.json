@@ -1,0 +1,400 @@
+{
+  "db": "PostgreSQL",
+  "17144fa281eb21a12ef21904246b788c4e2e980911932459cb80f200738ee1d4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "path",
+          "ordinal": 0,
+          "type_info": "TextArray"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n                    DELETE FROM node\n                    WHERE \"path\" @> $1\n                    RETURNING \"path\"\n                    "
+  },
+  "199fc85d3eabb422c6e0f67a30ecc554deea968be65e407e7f7b44ea01149d65": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                UPDATE node\n                SET\n                    \"path\" = \"path\"[:(coalesce(array_upper($1, 1), 0) - 1)]\n                        || ARRAY[$2]\n                        || \"path\"[(coalesce(array_upper($1, 1), 0) + 1):]\n                WHERE \"path\" @> $1\n                RETURNING id, \"path\", is_folder, created_at;\n                "
+  },
+  "2897881a55ddc0b840560a5a4ce28d68684e97930ac2e292aa4c12bb039dac27": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT id, \"path\", is_folder, created_at\n            FROM node\n            WHERE\n                \"path\" @> $1\n                AND array_upper(\"path\", 1) > coalesce(array_upper($1, 1), 0)\n                AND \"path\"[array_upper(\"path\", 1)] LIKE '%' || $2 || '%';\n            "
+  },
+  "519608799375872f6d66c056522640f37796de21fedb5b14307304da0b2b6884": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                        INSERT INTO node (\"path\", is_folder, \"data\")\n                        VALUES ($1, $2::text IS NULL, $2)\n                        ON CONFLICT (\"path\") DO NOTHING\n                        RETURNING id, \"path\", is_folder, created_at;\n                        "
+  },
+  "522e94b888de59f1bfd4283ab3a2da1619075ff5b75c66426deb9387c99af862": {
+    "describe": {
+      "columns": [
+        {
+          "name": "is_folder",
+          "ordinal": 0,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT is_folder\n            FROM node\n            WHERE \"path\" = $1\n            "
+  },
+  "678507621464054782f53c9fc5331e754f6e5ed039722811a3a62bc69ad2a7ed": {
+    "describe": {
+      "columns": [
+        {
+          "name": "is_folder",
+          "ordinal": 0,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT is_folder\n            FROM node\n            WHERE \"path\" = ($1::text[])[:(array_upper($1, 1) - 1)]\n            "
+  },
+  "721e788d2af9dd2434fb0f9573b221bfaaa0c66b6d58a75e7c1a6c4cba700087": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            UPDATE node\n            SET\n                \"path\" = $2\n                    || \"path\"[(coalesce(array_upper($1, 1), 0)):]\n            WHERE \"path\" @> $1\n            RETURNING id, \"path\", is_folder, created_at;\n            "
+  },
+  "99dca17986afb2829fa0fd4169a6299d89de88da756c694647e50093e4563d41": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT id, \"path\", is_folder, created_at\n            FROM node\n            WHERE \"path\" = $1\n            "
+  },
+  "9adc94ba9cca6e8245500a662cb616c46e73f5eff4aac30adbf3a93ac3ef2029": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                UPDATE node\n                SET\n                    \"path\" = \"path\"[:(array_upper(\"path\", 1) - 1)] || ARRAY[$2],\n                    \"data\" = $3\n                WHERE\n                    NOT is_folder\n                    AND \"path\" = $1\n                RETURNING id, \"path\", is_folder, created_at;\n                "
+  },
+  "aec10bac6312d89c9c39bc706172ea627e5b642cd5b23a84fb38efc8d8000891": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id!",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path!",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder!",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at!",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "size!",
+          "ordinal": 4,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT\n                id AS \"id!\",\n                \"path\" AS \"path!\",\n                is_folder AS \"is_folder!\",\n                created_at AS \"created_at!\",\n                char_length(\"data\") AS \"size!\"\n            FROM node\n            WHERE\n                NOT is_folder\n                AND \"path\" @> $1\n                AND array_upper(\"path\", 1) = coalesce(array_upper($1, 1), 0) + 1\n            UNION ALL\n            SELECT p.id, p.\"path\", p.is_folder, p.created_at, c_calc.\"size\"\n            FROM\n                node p\n                JOIN LATERAL (\n                    SELECT\n                        p.\"path\",\n                        coalesce(sum(char_length(c.\"data\")), 0) AS \"size\"\n                    FROM node c\n                    WHERE\n                        NOT c.is_folder\n                        AND c.\"path\" @> p.\"path\"\n                        AND array_upper(c.\"path\", 1) = array_upper(p.\"path\", 1) + 1\n                ) c_calc ON p.\"path\" = c_calc.\"path\"\n            WHERE\n                is_folder\n                AND p.\"path\" @> $1\n                AND array_upper(p.\"path\", 1) = coalesce(array_upper($1, 1), 0) + 1;\n            "
+  },
+  "cb49bafffc7e690f811545ed7ee0ddd6f6d76c6de7c7031c9adebb8097e4a955": {
+    "describe": {
+      "columns": [
+        {
+          "name": "data",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT \"data\"\n            FROM node\n            WHERE \"path\" = $1\n            "
+  },
+  "e83563374264c2f6874b4d335fa1071b1f67188f01d47c567950157d3810e658": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "TextArray"
+        },
+        {
+          "name": "is_folder",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                        WITH RECURSIVE rec AS (\n                            SELECT\n                                $1::text[] AS \"path\",\n                                $2::text IS NULL AS is_folder,\n                                $2 AS \"data\"\n                            UNION ALL\n                            SELECT \"path\"[:(array_upper(\"path\", 1) - 1)], TRUE AS is_folder, NULL\n                            FROM rec\n                            WHERE array_upper(\"path\", 1) > 1\n                        )\n                        INSERT INTO node(\"path\", is_folder, \"data\")\n                        SELECT \"path\", is_folder, \"data\"\n                        FROM rec\n                        ON CONFLICT (\"path\") DO NOTHING\n                        RETURNING id, \"path\", is_folder, created_at;\n                        "
+  }
+}
