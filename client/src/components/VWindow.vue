@@ -207,6 +207,13 @@
           break;
         }
         case YargsCommand.MV: {
+          const path = encodePath(block.workingNode.path, argv.PATH);
+          const folder_path = encodePath(block.workingNode.path, argv.FOLDER_PATH);
+
+          if (folder_path.join('/').includes(path.join('/'))) {
+            throw new Error('cannot move PATH to a subdirectory of itself');
+          }
+
           const res = (
             await axios.post('/api/mv', {
               path: encodePath(block.workingNode.path, argv.PATH),
@@ -238,8 +245,18 @@
           break;
         }
       }
-    } catch (err) {
-      block.error = (err as AxiosError).response?.data.error;
+    } catch (err: any) {
+      // AxiosError.
+      if (err.response) {
+        block.error = err.response.data.error;
+      }
+      // Error.
+      else if (err.message) {
+        block.error = {
+          code: '400',
+          message: err.message,
+        };
+      }
     } finally {
       block.loading = false;
     }
