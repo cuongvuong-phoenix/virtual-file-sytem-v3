@@ -8,7 +8,7 @@ declare module 'vue' {
     IMdiChevronRight: typeof import('~icons/mdi/chevron-right')['default']
     IMdiClockTimeEightOutline: typeof import('~icons/mdi/clock-time-eight-outline')['default']
     IMdiClose: typeof import('~icons/mdi/close')['default']
-    IMdiFileDocumentMultipleOutline: typeof import('~icons/mdi/file-document-multiple-outline')['default']
+    IMdiFileCabinet: typeof import('~icons/mdi/file-cabinet')['default']
     IMdiFolderOpen: typeof import('~icons/mdi/folder-open')['default']
     IMdiGithub: typeof import('~icons/mdi/github')['default']
     IMdiLoading: typeof import('~icons/mdi/loading')['default']
