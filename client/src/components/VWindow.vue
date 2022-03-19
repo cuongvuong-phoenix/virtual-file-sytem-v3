@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-hidden text-gray-300 bg-gray-800 rounded-lg">
+  <div class="overflow-hidden font-mono text-gray-300 bg-gray-800 rounded-lg">
     <!-- "Header" -->
     <div class="flex items-center justify-between p-2 space-x-16 bg-gray-900">
       <!-- "Left" -->
