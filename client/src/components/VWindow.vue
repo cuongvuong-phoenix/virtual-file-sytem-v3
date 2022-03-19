@@ -21,7 +21,7 @@
     <!-- "Body" -->
     <div
       ref="windowBodyRef"
-      class="px-2 py-4 space-y-4 min-h-[16rem] h-[calc(100vh-23rem)] overflow-auto"
+      class="px-2 py-4 space-y-4 min-h-[20rem] h-[calc(100vh-21rem)] overflow-auto"
       style="--scrollbar--thumb: #6b7280; --scrollbar--thumb-hover: #7a808d"
     >
       <div v-for="block in blocks" :key="block.id">
@@ -34,7 +34,7 @@
       </div>
 
       <div v-if="!welcomed" class="flex items-center justify-center text-gray-600">
-        {{ 'Type `--help` or `[command] --help` to get some help' }}
+        {{ 'Type `--help` or `[command] --help` for instructions' }}
       </div>
     </div>
     <!-- END "Body" -->
