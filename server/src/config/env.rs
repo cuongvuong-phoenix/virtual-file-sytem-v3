@@ -11,7 +11,7 @@ pub static ADDRESS: Lazy<String> = Lazy::new(|| {
 pub static ALLOWED_ORIGIN: Lazy<Vec<String>> = Lazy::new(|| get_list_env("ALLOWED_ORIGIN"));
 
 pub static DATABASE_URL: Lazy<String> =
-    Lazy::new(|| env::var("DATABASE_URL").expect("DATABASE_URL is set"));
+    Lazy::new(|| env::var("DATABASE_URL").expect("DATABASE_URL is set") + "?sslmode=require");
 
 // ----------------------------------------------------------------
 // Helpers

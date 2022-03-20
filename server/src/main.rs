@@ -8,6 +8,7 @@ use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::{
+    compression::CompressionLayer,
     cors::{CorsLayer, Origin},
     trace::TraceLayer,
 };
@@ -37,6 +38,7 @@ async fn main() {
     // Middlewares.
     let middlewares = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
+        .layer(CompressionLayer::new())
         .layer(
             CorsLayer::new()
                 .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])

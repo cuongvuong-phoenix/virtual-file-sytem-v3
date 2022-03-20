@@ -1,3 +1,0 @@
-# Concepts
-
-*Work in process...*
