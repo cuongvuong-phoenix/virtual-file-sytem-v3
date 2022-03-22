@@ -204,16 +204,15 @@
         }
         case YargsCommand.UP: {
           const name = argv.NAME;
-          const validNameMatch = name.match(VALID_PATH_SEGMENT_REGEX);
 
-          if (!validNameMatch) {
+          if (!VALID_PATH_SEGMENT_REGEX.test(name)) {
             throw new Error('invalid NAME, must match the regex /^[a-zA-z0-9 _-]+');
           }
 
           const res = (
             await axios.post('/api/up', {
               path: encodePath(block.workingNode.path, argv.PATH),
-              name: argv.NAME,
+              name,
               data: argv.DATA,
             })
           ).data;

@@ -2,7 +2,7 @@ export function decodePath(pathArr: string[]) {
   return `/${pathArr.join('/')}`;
 }
 
-export const VALID_PATH_SEGMENT_REGEX = /^[a-zA-z0-9 _-]+$/g;
+export const VALID_PATH_SEGMENT_REGEX = /^[a-zA-z0-9 _-]+$/;
 
 export function encodePath(workingPath: string[], path?: string) {
   const result = workingPath.slice();
@@ -35,9 +35,7 @@ export function encodePath(workingPath: string[], path?: string) {
   }
 
   result.forEach((pathSegment) => {
-    const validPathSegmentMatch = pathSegment.match(VALID_PATH_SEGMENT_REGEX);
-
-    if (!validPathSegmentMatch) {
+    if (!VALID_PATH_SEGMENT_REGEX.test(pathSegment)) {
       throw new Error(`invalid name in path ("${pathSegment}"), must match the regex /^[a-zA-z0-9 _-]+$/`);
     }
   });
