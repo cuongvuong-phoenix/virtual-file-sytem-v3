@@ -45,7 +45,7 @@
   import { type Ref, nextTick, onMounted, ref } from 'vue';
   import { parseISO } from 'date-fns';
   import { YargsCommand, yargs } from '~/composables';
-  import { axios, encodePath } from '~/helpers';
+  import { VALID_PATH_SEGMENT_REGEX, axios, encodePath } from '~/helpers';
   import type VWindowBlockHeader from '~/components/VWindowBlockHeader.vue';
 
   const windowBodyRef = ref<HTMLDivElement | null>(null);
@@ -203,6 +203,13 @@
           break;
         }
         case YargsCommand.UP: {
+          const name = argv.NAME;
+          const validNameMatch = name.match(VALID_PATH_SEGMENT_REGEX);
+
+          if (!validNameMatch) {
+            throw new Error('invalid NAME, must match the regex /^[a-zA-z0-9 _-]+');
+          }
+
           const res = (
             await axios.post('/api/up', {
               path: encodePath(block.workingNode.path, argv.PATH),
