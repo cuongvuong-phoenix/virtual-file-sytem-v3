@@ -54,8 +54,10 @@
       v-else
       ref="inputRef"
       v-model="block.command"
+      type="text"
       class="flex-1 min-w-0 px-2 py-1"
       autocomplete="off"
+      spellcheck="false"
       @keydown.enter="event => emit('enter', (event.target as HTMLInputElement).value)"
     />
   </div>
