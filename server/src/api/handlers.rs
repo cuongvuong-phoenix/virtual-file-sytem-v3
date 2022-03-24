@@ -72,8 +72,8 @@ pub async fn mv(
 pub async fn rm(
     Extension(state): Extension<Arc<State>>,
     Json(node): Json<NodePaths>,
-) -> impl IntoResponse {
-    let body = node.rm(&state.db_pool).await;
+) -> Result<impl IntoResponse, AppError> {
+    let body = node.rm(&state.db_pool).await?;
 
-    (StatusCode::OK, body).into_response()
+    Ok((StatusCode::OK, body).into_response())
 }

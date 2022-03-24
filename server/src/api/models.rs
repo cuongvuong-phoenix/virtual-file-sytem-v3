@@ -367,17 +367,16 @@ pub struct NodePaths {
 }
 
 impl NodePaths {
-    pub async fn rm(&self, db_pool: &Pool<Postgres>) -> Json<Value> {
+    pub async fn rm(&self, db_pool: &Pool<Postgres>) -> Result<Json<Value>, AppError> {
         for path in &self.paths {
             if path.len() == 0 {
-                return Json(json!({
-                    "error": {
-                        "code": "400",
-                        "message": "cannot delete root path"
-                    }
-                }));
+                return Err(AppError::Vfs(VfsError::ManipulateRootPath));
             }
         }
+
+        let mut transaction = db_pool.begin().await?;
+
+        transaction.begin().await?;
 
         let a: Vec<Result<(&Vec<String>, bool), AppError>> =
             future::join_all(self.paths.iter().map(|path| async move {
@@ -399,6 +398,8 @@ impl NodePaths {
             }))
             .await;
 
+        transaction.commit().await?;
+
         let paths: Vec<_> = a.into_iter().filter_map(|result| result.ok()).collect();
 
         let (removed_paths, non_existed_paths): (Vec<_>, Vec<_>) =
@@ -408,12 +409,12 @@ impl NodePaths {
         let non_existed_paths: Vec<_> =
             non_existed_paths.into_iter().map(|tuple| tuple.0).collect();
 
-        Json(json!({
+        Ok(Json(json!({
             "data": {
                 "removedPaths": removed_paths,
                 "nonExistedPaths": non_existed_paths
             }
-        }))
+        })))
     }
 }
 
