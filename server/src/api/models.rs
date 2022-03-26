@@ -378,7 +378,7 @@ impl NodePaths {
 
         transaction.begin().await?;
 
-        let a: Vec<Result<(&Vec<String>, bool), AppError>> =
+        let results: Vec<Result<(&Vec<String>, bool), AppError>> =
             future::join_all(self.paths.iter().map(|path| async move {
                 sqlx::query!(
                     r#"
@@ -400,7 +400,10 @@ impl NodePaths {
 
         transaction.commit().await?;
 
-        let paths: Vec<_> = a.into_iter().filter_map(|result| result.ok()).collect();
+        let paths: Vec<_> = results
+            .into_iter()
+            .filter_map(|result| result.ok())
+            .collect();
 
         let (removed_paths, non_existed_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|tuple| tuple.1);
