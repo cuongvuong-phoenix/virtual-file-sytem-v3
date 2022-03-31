@@ -1,7 +1,9 @@
 {
-  "extends": ["@antfu/eslint-config", "prettier"],
+  "extends": ["@antfu", "prettier"],
   "rules": {
-    "vue/no-setup-props-destructure": "off",
+    "vue/component-tags-order": ["error", {
+      "order": [ [ "script", "template" ], "style" ]
+    }],
     "vue/no-mutating-props": "off"
   }
 }
