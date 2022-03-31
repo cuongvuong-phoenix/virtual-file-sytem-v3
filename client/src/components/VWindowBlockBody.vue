@@ -33,7 +33,7 @@
         <tbody>
           <tr v-for="node in block.data" :key="node.id">
             <td class="text-gray-400 whitespace-nowrap">{{ format(node.createdAt, DateFormat.FULL) }}</td>
-            <td class="text-amber-600 text-right pl-4 whitespace-nowrap">{{ node.size }}</td>
+            <td class="pl-4 text-right text-amber-600 whitespace-nowrap">{{ node.size !== 0 ? node.size : '-' }}</td>
             <td
               class="truncate pl-4 max-w-[1px]"
               :class="{
